@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinix Club — Content Planner</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="shortcut icon" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #2a2a35;
+    --accent: #00e5ff;
+    --accent2: #ff3b6b;
+    --accent3: #7c3aed;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --success: #00d68f;
+    --warning: #ffb800;
+    --danger: #ff3b6b;
+    --glow: 0 0 24px rgba(0,229,255,0.15);
+    --glow2: 0 0 24px rgba(255,59,107,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOP NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center; gap: 20px;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+  }
+  .logo-x {
+    color: var(--accent);
+    font-size: 22px;
+  }
+
+  nav .sep { flex: 1; }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 12px;
+    background: rgba(0,214,143,0.1);
+    border: 1px solid rgba(0,214,143,0.3);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--success);
+    letter-spacing: 0.5px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; font-weight: 700;
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .side-label {
+    padding: 12px 20px 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .side-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+    color: var(--muted);
+    border: none; background: none;
+    text-align: left; width: 100%;
+    font-family: 'DM Mono', monospace;
+    position: relative;
+  }
+  .side-btn:hover { background: var(--surface2); color: var(--text); }
+  .side-btn.active {
+    background: rgba(0,229,255,0.08);
+    color: var(--accent);
+    border-right: 2px solid var(--accent);
+  }
+  .side-btn .icon { font-size: 15px; width: 18px; text-align: center; }
+  .badge {
+    margin-left: auto;
+    background: var(--accent2);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  /* ── MAIN ── */
+  main {
+    padding: 32px;
+    display: flex; flex-direction: column; gap: 28px;
+    overflow-y: auto;
+  }
+
+  .page { display: none; flex-direction: column; gap: 28px; }
+  .page.active { display: flex; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .page-title span { color: var(--accent); }
+  .page-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  /* ── STATS GRID ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .stat-card:hover::after { opacity: 1; }
+
+  .stat-icon { font-size: 20px; margin-bottom: 12px; }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-delta { font-size: 11px; color: var(--success); margin-top: 8px; }
+  .stat-delta.down { color: var(--danger); }
+
+  /* ── POST COMPOSER ── */
+  .composer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .composer::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .composer-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .composer-title .tag {
+    font-size: 10px;
+    background: rgba(0,229,255,0.12);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1/-1; }
+
+  label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+
+  input, select, textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.1);
+  }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none; cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+  .btn-primary:hover { background: #00c8e0; box-shadow: 0 4px 20px rgba(0,229,255,0.4); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: rgba(255,59,107,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(255,59,107,0.3);
+  }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ── AI RESULT ── */
+  .ai-result {
+    background: var(--bg);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 16px;
+    display: none;
+  }
+  .ai-result.show { display: block; }
+  .ai-result-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ai-result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .ai-result-body {
+    font-size: 13px; line-height: 1.7;
+    color: #b0b0c0;
+    white-space: pre-wrap;
+  }
+
+  /* ── POST LOG ── */
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .log-table td {
+    padding: 12px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(42,42,53,0.5);
+    vertical-align: middle;
+  }
+  .log-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .pill-success { background: rgba(0,214,143,0.12); color: var(--success); border: 1px solid rgba(0,214,143,0.25); }
+  .pill-pending { background: rgba(255,184,0,0.12); color: var(--warning); border: 1px solid rgba(255,184,0,0.25); }
+  .pill-fail { background: rgba(255,59,107,0.12); color: var(--danger); border: 1px solid rgba(255,59,107,0.25); }
+
+  .tid-link { color: var(--accent); text-decoration: none; font-size: 11px; }
+  .tid-link:hover { text-decoration: underline; }
+
+  /* ── SCHEDULE GRID ── */
+  .sched-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .sched-day-label {
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding-bottom: 8px;
+  }
+  .sched-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+    min-height: 80px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .sched-cell:hover { border-color: var(--accent); }
+  .sched-date { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .sched-date.today { color: var(--accent); font-weight: 700; }
+  .sched-post {
+    font-size: 10px;
+    background: rgba(0,229,255,0.1);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 3px 5px;
+    margin-bottom: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .sched-post:hover { background: rgba(0,229,255,0.2); }
+
+  /* ── SETTINGS ── */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .settings-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ── TOGGLE ── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42,42,53,0.5);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-info { font-size: 12px; color: var(--text); }
+  .toggle-info small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* ── TOAST ── */
+  #toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    min-width: 240px;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.warn { border-left-color: var(--warning); }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SECTION CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .card-body { padding: 20px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── TOPIC CARDS ── */
+  .topic-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .topic-card:hover { border-color: var(--accent); color: var(--text); }
+  .topic-card.selected {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.07);
+    color: var(--accent);
+  }
+  .topic-card .t-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+    background: var(--surface2);
+  }
+  .topic-card.selected .t-icon { background: rgba(0,229,255,0.15); }
+  .topic-card .t-info { flex: 1; min-width: 0; }
+  .topic-card .t-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topic-card .t-desc { font-size: 10px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topic-card.selected .t-desc { color: rgba(0,229,255,0.55); }
+  .topic-card .t-check {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 1.5px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; transition: all 0.15s;
+  }
+  .topic-card.selected .t-check { background: var(--accent); border-color: var(--accent); color: #000; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><span class="logo-x">✕</span> Infinix<span style="color:var(--muted);font-weight:400">Club</span> Dashboard</div>
+  <div class="sep"></div>
+  <div class="status-pill"><div class="status-dot"></div> API Connected</div>
+  <div class="user-chip"><div class="avatar">SA</div> Sohail6651</div>
+</nav>
+
+<!-- SHELL -->
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="side-label">Navigation</div>
+  <button class="side-btn active" onclick="nav('overview')"><span class="icon">◈</span> Overview</button>
+  <button class="side-btn" onclick="nav('compose')"><span class="icon">✦</span> Compose Post <span class="badge">AI</span></button>
+  <button class="side-btn" onclick="nav('schedule')"><span class="icon">◷</span> Schedule</button>
+  <button class="side-btn" onclick="nav('log')"><span class="icon">≡</span> Post Log</button>
+  <div class="side-label" style="margin-top:12px">Config</div>
+  <button class="side-btn" onclick="nav('settings')"><span class="icon">⊙</span> Settings</button>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="page active" id="page-overview">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Content <span>Overview</span></div>
+      <div class="page-sub">March 2026 — Sohail6651</div>
+    </div>
+    <button class="btn btn-primary" onclick="nav('compose')">✦ New Post</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-icon">📤</div>
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-label">Posts Published</div>
+      <div class="stat-delta">↑ This month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🤖</div>
+      <div class="stat-val" id="stat-ai">0</div>
+      <div class="stat-label">AI Generated</div>
+      <div class="stat-delta">↑ Groq Llama 3.3</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-val" id="stat-sched">0</div>
+      <div class="stat-label">Scheduled</div>
+      <div class="stat-delta" id="stat-sched-next">No upcoming</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">❌</div>
+      <div class="stat-val" id="stat-fail">0</div>
+      <div class="stat-label">Failed</div>
+      <div class="stat-delta down" id="stat-fail-pct">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Recent Posts</h3>
+      <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px" onclick="nav('log')">View All →</button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="log-table" id="recent-table">
+        <thead><tr>
+          <th>Title</th>
+          <th>Topic</th>
+          <th>Status</th>
+          <th>Thread</th>
+          <th>Time</th>
+        </tr></thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No posts yet — compose your first post!</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMPOSE ═══ -->
+<div class="page" id="page-compose">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Compose <span>Post</span></div>
+      <div class="page-sub">AI-powered via Groq Llama 3.3 70B</div>
+    </div>
+  </div>
+
+  <div class="composer">
+    <div class="composer-title">📝 Post Generator <span class="tag">AI</span></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Topic / Subject</label>
+        <input type="text" id="inp-topic" placeholder="e.g. Infinix Gaming Phones saste mein..." value="Infinix Gaming Phones Saste Mein Powerful Performance?">
+      </div>
+      <div class="form-group">
+        <label>Language</label>
+        <select id="inp-lang">
+          <option value="Urdu">اردو (Urdu)</option>
+          <option value="English">English</option>
+          <option value="Hinglish">Hinglish</option>
+          <option value="Roman Urdu">Roman Urdu</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tone</label>
+        <select id="inp-tone">
+          <option value="casual and friendly">Casual & Friendly</option>
+          <option value="professional">Professional</option>
+          <option value="excited and hype">Excited / Hype</option>
+          <option value="informative">Informative</option>
+          <option value="humorous">Humorous</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Forum Category (FID)</label>
+        <select id="inp-fid" onchange="loadTopics()">
+          <option value="293">293 — Pakistan 🇵🇰</option>
+          <option value="1">1 — General</option>
+          <option value="2">2 — Reviews</option>
+          <option value="5">5 — Gaming</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Thread Topic / typeid -->
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        🏷 Thread Topic
+        <button onclick="loadTopics()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;font-family:inherit;padding:0;letter-spacing:0.5px">↻ Reload</button>
+      </label>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px" id="topic-grid">
+        <div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Token save karo phir topics load hongi...</div>
+      </div>
+      <input type="hidden" id="inp-topid" value="0">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Groq API Key</label>
+        <input type="password" id="inp-groq" placeholder="gsk_...">
+      </div>
+      <div class="form-group">
+        <label>Auth Token (JWT)</label>
+        <input type="password" id="inp-token" placeholder="eyJ...">
+      </div>
+    </div>
+
+    <!-- Cover Image -->
+    <div class="form-group" style="margin-bottom:16px">
+      <label>🖼 Cover Image URL (optional)</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="url" id="inp-image-url" placeholder="https://example.com/image.jpg" oninput="previewImage()" style="flex:1">
+        <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px;white-space:nowrap" onclick="clearImage()">✕ Clear</button>
+      </div>
+      <!-- Preview -->
+      <div id="img-preview-wrap" style="display:none;margin-top:12px;position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;max-height:220px">
+        <img id="img-preview" src="" alt="Cover Preview"
+          style="width:100%;max-height:220px;object-fit:cover;display:block">
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;
+          background:linear-gradient(transparent,rgba(0,0,0,0.7));
+          font-size:11px;color:rgba(255,255,255,0.7)">Cover Image Preview</div>
+        <div id="img-status" style="position:absolute;top:8px;right:8px;
+          background:rgba(0,214,143,0.9);color:#000;font-size:10px;font-weight:700;
+          padding:3px 8px;border-radius:4px;display:none">✓ Valid</div>
+      </div>
+      <div id="img-error" style="display:none;margin-top:6px;font-size:11px;color:var(--danger)">
+        ⚠ Image load nahi hui — URL check karo
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btn-gen" onclick="generatePost()">⚡ Generate with AI</button>
+      <button class="btn btn-primary" id="btn-post" onclick="publishPost()" disabled>🚀 Publish to Infinix Club</button>
+      <button class="btn btn-secondary" onclick="schedulePost()" id="btn-sched">◷ Schedule</button>
+    </div>
+
+    <!-- AI Result -->
+    <div class="ai-result" id="ai-result">
+      <div class="ai-result-label">✦ AI Generated Post</div>
+      <div class="ai-result-title" id="ai-title">—</div>
+      <div class="ai-result-body" id="ai-body">—</div>
+      <div id="ai-img-thumb" style="display:none;margin-top:12px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Cover Image</div>
+        <img id="ai-img-preview" src="" style="max-height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--border)" alt="">
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="editPost()">✏ Edit</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="regeneratePost()">↻ Regenerate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Compose -->
+  <div class="card">
+    <div class="card-header"><h3>✏ Manual Compose</h3></div>
+    <div class="card-body">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Post Title</label>
+        <input type="text" id="man-title" placeholder="Enter post title...">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Post Content</label>
+        <textarea id="man-content" placeholder="Write your post here..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>🖼 Cover Image URL (optional)</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="url" id="man-image-url" placeholder="https://example.com/image.jpg" oninput="previewManImage()" style="flex:1">
+          <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px" onclick="document.getElementById('man-image-url').value='';document.getElementById('man-img-wrap').style.display='none'">✕</button>
+        </div>
+        <div id="man-img-wrap" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:160px">
+          <img id="man-img-preview" src="" style="width:100%;max-height:160px;object-fit:cover;display:block" alt="">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="manualPublish()">🚀 Publish Manual Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCHEDULE ═══ -->
+<div class="page" id="page-schedule">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Content <span>Schedule</span></div>
+      <div class="page-sub">March 2026 — Weekly planner</div>
+    </div>
+    <button class="btn btn-primary" onclick="nav('compose')">+ Add Post</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>📅 This Week</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+        <div class="sched-day-label">Mon</div>
+        <div class="sched-day-label">Tue</div>
+        <div class="sched-day-label">Wed</div>
+        <div class="sched-day-label">Thu</div>
+        <div class="sched-day-label">Fri</div>
+        <div class="sched-day-label">Sat</div>
+        <div class="sched-day-label">Sun</div>
+      </div>
+      <div class="sched-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>⏰ Upcoming Scheduled Posts</h3></div>
+    <div class="card-body" style="padding:0">
+      <table class="log-table" id="sched-table">
+        <thead><tr>
+          <th>Title</th>
+          <th>Topic</th>
+          <th>Scheduled For</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody id="sched-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">No scheduled posts</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOG ═══ -->
+<div class="page" id="page-log">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Post <span>Log</span></div>
+      <div class="page-sub">Full history of published posts</div>
+    </div>
+    <button class="btn btn-secondary" onclick="exportLog()">↓ Export JSON</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>All Posts</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="log-search" placeholder="Search posts..." style="width:180px;padding:6px 10px;font-size:12px" oninput="filterLog()">
+        <select id="log-filter" onchange="filterLog()" style="padding:6px 10px;font-size:12px;width:120px">
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:0">
+      <table class="log-table">
+        <thead><tr>
+          <th>Title</th>
+          <th>Topic</th>
+          <th>Language</th>
+          <th>Status</th>
+          <th>Thread ID</th>
+          <th>Time</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody id="log-tbody">
+          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">No posts in log</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="page" id="page-settings">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Bot <span>Settings</span></div>
+      <div class="page-sub">Configure API credentials and behavior</div>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <div class="settings-card">
+      <h3>🔑 API Credentials</h3>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Groq API Key</label>
+        <input type="password" id="set-groq" placeholder="gsk_...">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Infinix Club Auth Token</label>
+        <input type="password" id="set-token" placeholder="eyJ...">
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Cookie String</label>
+        <textarea id="set-cookie" style="min-height:80px" placeholder="_ga=..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveCredentials()">💾 Save Credentials</button>
+      <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="debugCredentials()">🔍 Test Credentials</button>
+      <div id="debug-result" style="display:none;margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all"></div>
+    </div>
+
+    <div class="settings-card">
+      <h3>⚙ Default Config</h3>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Default Language</label>
+        <select id="set-lang">
+          <option value="Urdu">Urdu</option>
+          <option value="English">English</option>
+          <option value="Hinglish">Hinglish</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Default Tone</label>
+        <select id="set-tone">
+          <option value="casual and friendly">Casual & Friendly</option>
+          <option value="professional">Professional</option>
+          <option value="excited and hype">Excited / Hype</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Default Forum FID</label>
+        <input type="number" id="set-fid" value="293">
+      </div>
+      <button class="btn btn-primary" onclick="saveDefaults()">💾 Save Defaults</button>
+    </div>
+
+    <div class="settings-card">
+      <h3>🤖 Bot Behavior</h3>
+      <div class="toggle-row">
+        <div class="toggle-info">Auto-post on schedule<small>Post at scheduled time automatically</small></div>
+        <div class="toggle on" id="tog-auto" onclick="toggleIt('tog-auto')"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">AI content only<small>Require AI generation before posting</small></div>
+        <div class="toggle" id="tog-aionly" onclick="toggleIt('tog-aionly')"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">Preview before publish<small>Show preview modal before posting</small></div>
+        <div class="toggle on" id="tog-preview" onclick="toggleIt('tog-preview')"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">Log all activity<small>Save all posts to local log</small></div>
+        <div class="toggle on" id="tog-log" onclick="toggleIt('tog-log')"></div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>ℹ Bot Info</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">AI Model</span><span>Groq Llama 3.3 70B</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">API Endpoint</span><span style="color:var(--accent)">/v5/content/thread</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">User</span><span>Sohail6651</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Format</span><span>BBCode</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Base URL</span><span>infinix.club</span></div>
+        <div style="margin-top:12px">
+          <button class="btn btn-danger" style="width:100%" onclick="clearLog()">🗑 Clear All Log Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  THREAD TOPICS — loaded live from Infinix API
+// ══════════════════════════════════════════
+const TOPIC_ICONS = ['📝','📅','⭐','💡','🙋','🎉','📰','📸','🔥','🎮','💬','🏆','🛠','📊','🎯','✨'];
+let loadedTopics = [];
+
+async function loadTopics() {
+  const grid = document.getElementById('topic-grid');
+  if (!grid) return;
+
+  const token  = document.getElementById('inp-token')?.value.trim() || state.creds.token || '';
+  const cookie = state.creds.cookie || '';
+  const fid    = document.getElementById('inp-fid')?.value || 293;
+
+  grid.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Topics load ho rahi hain...</div>`;
+
+  try {
+    const params = new URLSearchParams({ fid });
+    if (token)  params.set('authToken', token);
+    if (cookie) params.set('cookie', cookie);
+
+    const res  = await fetch(`${PROXY}/api/categories?${params}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // server returns { topics: [{topid, name, icon, desc}] }
+    const list = data.topics || [];
+
+    const emojis = ['📅','⭐','💡','🙋','🎉','📰','📸','🔥','🎮','💬','🏆','🛠'];
+    const seen   = new Set();
+    const merged = [{ topid: 0, name: 'No Topic', emoji: '📝', desc: 'Koi tag nahi' }];
+    seen.add(0);
+
+    list.forEach((t, i) => {
+      if (t.topid && !seen.has(t.topid)) {
+        merged.push({ topid: t.topid, name: t.name, emoji: emojis[i % emojis.length], desc: t.desc || '', img: t.icon || '' });
+        seen.add(t.topid);
+      }
+    });
+
+    // Always ensure Daily Thread 6675163 exists
+    if (!seen.has(6675163)) {
+      merged.splice(1, 0, { topid: 6675163, name: 'Daily Thread', emoji: '📅', desc: 'Rozana ki post' });
+    }
+    // Always ensure Daily Thread 6674907 exists
+    if (!seen.has(6674907)) {
+      merged.splice(1, 0, { topid: 6674907, name: 'V4 GAMES', emoji: '📅', desc: 'V4 Games main gaming fans gameplay videos dekhain' });
+    }
+       // Always ensure Daily Thread 6675164 exists
+    if (!seen.has(6675164)) {
+      merged.splice(1, 0, { topid: 6675164, name: 'PlayStation Universe', emoji: '📅', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' });
+    }
+
+
+    loadedTopics = merged;
+    renderTopicCards();
+    toast(data.fallback ? '⚠ Fallback topics' : `✓ ${merged.length - 1} topics loaded`, data.fallback ? 'warn' : 'success');
+
+  } catch(e) {
+    console.warn('Topic load failed:', e.message);
+    loadedTopics = [
+      { topid: 0,       name: 'No Topic',       emoji: '📝', desc: 'Koi tag nahi' },
+      { topid: 6675163, name: 'Daily Thread',   emoji: '📅', desc: 'Rozana ki post' },
+      { topid: 6674907, name: 'V4 GAMES',         emoji: '⭐', desc: 'V4 Games main gaming fans gameplay videos dekhain' },
+      { topid: 6675164, name: 'PlayStation Universe',  emoji: '💡', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' },
+      { topid: 4,       name: 'Help & Support', emoji: '🙋', desc: 'Koi masla?' },
+      { topid: 5,       name: 'Off Topic',      emoji: '🎉', desc: 'Fun stuff' },
+    ];
+    renderTopicCards();
+    toast('Offline topics — server se connect karo', 'warn');
+  }
+}
+
+function renderTopicCards() {
+  const grid = document.getElementById('topic-grid');
+  if (!grid) return;
+  const current = parseInt(document.getElementById('inp-topid').value) || 0;
+
+  grid.innerHTML = loadedTopics.map(t => `
+    <div class="topic-card ${t.topid === current ? 'selected' : ''}"
+         id="tc-${t.topid}" onclick="selectTopic(${t.topid})">
+      <div class="t-icon">${t.img
+        ? `<img src="${t.img}" style="width:22px;height:22px;object-fit:contain;border-radius:3px"
+               onerror="this.parentNode.textContent='${t.emoji}'">`
+        : t.emoji}</div>
+      <div class="t-info">
+        <div class="t-name">${t.name}</div>
+        <div class="t-desc">${t.desc || '—'}</div>
+      </div>
+      <div class="t-check">${t.topid === current ? '✓' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function renderTopics() { loadTopics(); }
+
+function selectTopic(id) {
+  document.querySelectorAll('.topic-card').forEach(c => {
+    c.classList.remove('selected');
+    c.querySelector('.t-check').textContent = '';
+  });
+  const card = document.getElementById('tc-' + id);
+  if (card) {
+    card.classList.add('selected');
+    card.querySelector('.t-check').textContent = '✓';
+  }
+  document.getElementById('inp-topid').value = id;
+  const t = loadedTopics.find(x => x.topid === id);
+  if (t) toast(`✓ Topic: ${t.name}`, 'success');
+}
+
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let state = {
+  posts: JSON.parse(localStorage.getItem('ixcPosts') || '[]'),
+  scheduled: JSON.parse(localStorage.getItem('ixcScheduled') || '[]'),
+  creds: JSON.parse(localStorage.getItem('ixcCreds') || '{}'),
+  defaults: JSON.parse(localStorage.getItem('ixcDefaults') || '{"lang":"Urdu","tone":"casual and friendly","fid":293}'),
+};
+let currentGenerated = null;
+
+function save() {
+  localStorage.setItem('ixcPosts', JSON.stringify(state.posts));
+  localStorage.setItem('ixcScheduled', JSON.stringify(state.scheduled));
+  localStorage.setItem('ixcCreds', JSON.stringify(state.creds));
+  localStorage.setItem('ixcDefaults', JSON.stringify(state.defaults));
+}
+
+// ══════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.side-btn').forEach(b => {
+    if(b.getAttribute('onclick')?.includes("'"+page+"'")) b.classList.add('active');
+  });
+  if(page==='overview') refreshOverview();
+  if(page==='log') refreshLog();
+  if(page==='schedule') refreshSchedule();
+  if(page==='settings') loadSettings();
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 3000);
+}
+
+// ══════════════════════════════════════════
+//  OVERVIEW
+// ══════════════════════════════════════════
+function refreshOverview() {
+  const pub = state.posts.filter(p=>p.status==='published');
+  const ai = state.posts.filter(p=>p.ai);
+  const fail = state.posts.filter(p=>p.status==='failed');
+  document.getElementById('stat-total').textContent = pub.length;
+  document.getElementById('stat-ai').textContent = ai.length;
+  document.getElementById('stat-sched').textContent = state.scheduled.length;
+  document.getElementById('stat-fail').textContent = fail.length;
+
+  const tbody = document.getElementById('recent-tbody');
+  const recent = [...state.posts].reverse().slice(0,5);
+  if(!recent.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No posts yet — compose your first post!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = recent.map(p => `
+    <tr>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
+      <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td style="color:var(--muted);font-size:11px">${timeAgo(p.time)}</td>
+    </tr>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  IMAGE PREVIEW
+// ══════════════════════════════════════════
+function previewImage() {
+  const url = document.getElementById('inp-image-url').value.trim();
+  const wrap = document.getElementById('img-preview-wrap');
+  const img  = document.getElementById('img-preview');
+  const err  = document.getElementById('img-error');
+  const stat = document.getElementById('img-status');
+
+  if(!url) { wrap.style.display='none'; err.style.display='none'; return; }
+
+  wrap.style.display = 'block';
+  err.style.display  = 'none';
+  stat.style.display = 'none';
+  img.src = url;
+
+  img.onload  = () => { stat.style.display='block'; err.style.display='none'; };
+  img.onerror = () => { err.style.display='block';  wrap.style.display='none'; };
+}
+
+function clearImage() {
+  document.getElementById('inp-image-url').value = '';
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('img-error').style.display = 'none';
+  // also clear thumb in result
+  document.getElementById('ai-img-thumb').style.display = 'none';
+}
+
+function previewManImage() {
+  const url  = document.getElementById('man-image-url').value.trim();
+  const wrap = document.getElementById('man-img-wrap');
+  const img  = document.getElementById('man-img-preview');
+  if(!url) { wrap.style.display='none'; return; }
+  img.src = url;
+  img.onload  = () => { wrap.style.display='block'; };
+  img.onerror = () => { wrap.style.display='none'; };
+}
+
+// ══════════════════════════════════════════
+//  PROXY BASE URL
+// ══════════════════════════════════════════
+const PROXY = 'http://localhost:3000';
+
+// ══════════════════════════════════════════
+//  GENERATE POST (via proxy server)
+// ══════════════════════════════════════════
+async function generatePost() {
+  const topic   = document.getElementById('inp-topic').value.trim();
+  const lang    = document.getElementById('inp-lang').value;
+  const tone    = document.getElementById('inp-tone').value;
+  const groqKey = document.getElementById('inp-groq').value.trim() || state.creds.groq || '';
+
+  if(!topic) { toast('Topic enter karo pehle!','warn'); return; }
+
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Generating...';
+
+  try {
+    const res = await fetch(`${PROXY}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, tone, language: lang, groqKey })
+    });
+
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Server error');
+    if(!data.title || !data.content) throw new Error('AI ne galat format diya');
+
+    currentGenerated = { title: data.title, content: data.content, topic, lang, tone,
+      topid: parseInt(document.getElementById('inp-topid').value) || 0 };
+
+    // show image thumb in result if URL provided
+    const imgUrl = document.getElementById('inp-image-url').value.trim();
+    if(imgUrl) {
+      currentGenerated.imageUrl = imgUrl;
+      document.getElementById('ai-img-preview').src = imgUrl;
+      document.getElementById('ai-img-thumb').style.display = 'block';
+    } else {
+      currentGenerated.imageUrl = '';
+      document.getElementById('ai-img-thumb').style.display = 'none';
+    }
+
+    document.getElementById('ai-title').textContent = data.title;
+    document.getElementById('ai-body').textContent  = data.content;
+    document.getElementById('ai-result').classList.add('show');
+    document.getElementById('btn-post').disabled = false;
+
+    toast('✦ Post AI ne generate kar di!', 'success');
+  } catch(e) {
+    toast('Generation fail: ' + e.message + ' — Server chalu hai? (node server.js)', 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Generate with AI';
+}
+
+function editPost() {
+  if(!currentGenerated) return;
+  document.getElementById('man-title').value = currentGenerated.title;
+  document.getElementById('man-content').value = currentGenerated.content;
+  toast('Post manual editor mein copy ho gayi', 'info');
+}
+
+function regeneratePost() { generatePost(); }
+
+// ══════════════════════════════════════════
+//  PUBLISH (via proxy server → Infinix Club)
+// ══════════════════════════════════════════
+async function publishPost() {
+  if(!currentGenerated) { toast('Pehle post generate karo!','warn'); return; }
+
+  const authToken = document.getElementById('inp-token').value.trim() || state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const fid       = document.getElementById('inp-fid').value;
+
+  if(!authToken) { toast('Auth Token settings mein save karo!','warn'); return; }
+
+  const btn = document.getElementById('btn-post');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Publishing...';
+
+  try {
+    const res = await fetch(`${PROXY}/api/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: currentGenerated.title,
+        content: currentGenerated.content,
+        imageUrl: currentGenerated.imageUrl || '',
+        topid: currentGenerated.topid || 0,
+        fid, authToken, cookie
+      })
+    });
+
+    const data = await res.json();
+    if(!res.ok || data.error) {
+      const code = data.infinix_code ? ` [code:${data.infinix_code}]` : '';
+      const raw  = data.raw ? ('\n' + JSON.stringify(data.raw)) : '';
+      throw new Error((data.error || 'Publish failed') + code + raw);
+    }
+
+    const post = {
+      id: Date.now(),
+      title: currentGenerated.title,
+      content: currentGenerated.content,
+      topic: currentGenerated.topic,
+      lang: currentGenerated.lang,
+      tone: currentGenerated.tone,
+      imageUrl: currentGenerated.imageUrl || '',
+      fid,
+      status: 'published',
+      ai: true,
+      tid: data.tid,
+      url: data.url,
+      time: Date.now()
+    };
+
+    state.posts.push(post); save();
+    toast(`✓ Post published! Thread #${data.tid}`, 'success');
+    currentGenerated = null;
+    document.getElementById('ai-result').classList.remove('show');
+    clearImage();
+    refreshOverview();
+
+  } catch(e) {
+    toast('Publish fail: ' + e.message, 'error');
+    // Save as failed
+    state.posts.push({
+      id: Date.now(), title: currentGenerated.title,
+      topic: currentGenerated.topic, status: 'failed',
+      ai: true, time: Date.now()
+    });
+    save();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Publish to Infinix Club';
+}
+
+async function manualPublish() {
+  const title    = document.getElementById('man-title').value.trim();
+  const content  = document.getElementById('man-content').value.trim();
+  const imageUrl = document.getElementById('man-image-url').value.trim();
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+
+  if(!title || !content) { toast('Title aur content dono bharo!','warn'); return; }
+  if(!authToken) { toast('Auth Token Settings mein save karo pehle!','warn'); return; }
+
+  try {
+    const res = await fetch(`${PROXY}/api/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content, imageUrl, fid: 293, authToken, cookie })
+    });
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || 'Publish failed');
+
+    state.posts.push({
+      id: Date.now(), title, content,
+      imageUrl, topic: '—', lang: '—', tone: '—',
+      fid: 293, status: 'published', ai: false,
+      tid: data.tid, url: data.url, time: Date.now()
+    });
+    save();
+    toast(`✓ Manual post published! Thread #${data.tid}`, 'success');
+    document.getElementById('man-title').value = '';
+    document.getElementById('man-content').value = '';
+    document.getElementById('man-image-url').value = '';
+    document.getElementById('man-img-wrap').style.display = 'none';
+    refreshOverview();
+  } catch(e) {
+    toast('Manual publish fail: ' + e.message, 'error');
+  }
+}
+
+function schedulePost() {
+  if(!currentGenerated) { toast('Pehle post generate karo!','warn'); return; }
+  const when = prompt('Schedule time enter karo (e.g. 2026-03-30 18:00):');
+  if(!when) return;
+  state.scheduled.push({ ...currentGenerated, id: Date.now(), scheduledFor: when });
+  save();
+  toast(`◷ Post scheduled for ${when}`, 'success');
+  refreshOverview();
+}
+
+// ══════════════════════════════════════════
+//  LOG
+// ══════════════════════════════════════════
+function refreshLog() {
+  const search = (document.getElementById('log-search')?.value||'').toLowerCase();
+  const filter = document.getElementById('log-filter')?.value||'';
+  let posts = [...state.posts].reverse();
+  if(search) posts = posts.filter(p => p.title.toLowerCase().includes(search) || (p.topic||'').toLowerCase().includes(search));
+  if(filter) posts = posts.filter(p => p.status===filter);
+
+  const tbody = document.getElementById('log-tbody');
+  if(!posts.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">No posts found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = posts.map(p => `
+    <tr>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
+      <td style="font-size:11px">${p.lang||'—'}</td>
+      <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td style="color:var(--muted);font-size:11px">${new Date(p.time).toLocaleString()}</td>
+      <td><button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deletePost(${p.id})">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+function filterLog() { refreshLog(); }
+
+function deletePost(id) {
+  state.posts = state.posts.filter(p=>p.id!==id);
+  save(); refreshLog(); toast('Post deleted','warn');
+}
+
+function exportLog() {
+  const blob = new Blob([JSON.stringify(state.posts, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'infinix_post_log.json';
+  a.click();
+  toast('Log exported!', 'success');
+}
+
+function clearLog() {
+  if(!confirm('Saara log delete karna hai?')) return;
+  state.posts = []; save(); refreshLog(); refreshOverview();
+  toast('Log cleared', 'warn');
+}
+
+// ══════════════════════════════════════════
+//  SCHEDULE CALENDAR
+// ══════════════════════════════════════════
+function refreshSchedule() {
+  const grid = document.getElementById('cal-grid');
+  const today = new Date();
+  const dow = today.getDay(); // 0=Sun
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+
+  grid.innerHTML = '';
+  for(let i=0;i<7;i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    const isToday = d.toDateString()===today.toDateString();
+    const dateStr = d.toISOString().slice(0,10);
+    const dayPosts = state.scheduled.filter(p=>p.scheduledFor?.startsWith(dateStr));
+
+    const cell = document.createElement('div');
+    cell.className = 'sched-cell';
+    cell.innerHTML = `<div class="sched-date ${isToday?'today':''}">${d.getDate()}</div>`
+      + dayPosts.map(p=>`<div class="sched-post" title="${p.title}">${p.title.slice(0,18)}…</div>`).join('');
+    grid.appendChild(cell);
+  }
+
+  // Upcoming table
+  const tbody = document.getElementById('sched-tbody');
+  if(!state.scheduled.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">No scheduled posts</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.scheduled.map(p=>`
+    <tr>
+      <td>${p.title}</td>
+      <td style="color:var(--muted);font-size:11px">${p.topic||'—'}</td>
+      <td style="color:var(--warning)">${p.scheduledFor}</td>
+      <td>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deleteSched(${p.id})">Remove</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function deleteSched(id) {
+  state.scheduled = state.scheduled.filter(s=>s.id!==id);
+  save(); refreshSchedule(); toast('Scheduled post removed','warn');
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+function loadSettings() {
+  if(state.creds.groq) document.getElementById('set-groq').value = state.creds.groq;
+  if(state.creds.token) document.getElementById('set-token').value = state.creds.token;
+  if(state.creds.cookie) document.getElementById('set-cookie').value = state.creds.cookie;
+  document.getElementById('set-lang').value = state.defaults.lang||'Urdu';
+  document.getElementById('set-tone').value = state.defaults.tone||'casual and friendly';
+  document.getElementById('set-fid').value = state.defaults.fid||293;
+}
+
+function saveCredentials() {
+  state.creds.groq = document.getElementById('set-groq').value;
+  state.creds.token = document.getElementById('set-token').value;
+  state.creds.cookie = document.getElementById('set-cookie').value;
+  save(); toast('Credentials saved ✓','success');
+  if(state.creds.groq) document.getElementById('inp-groq').value = state.creds.groq;
+  if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
+}
+
+async function debugCredentials() {
+  const token  = document.getElementById('set-token').value.trim() || state.creds.token || '';
+  const cookie = document.getElementById('set-cookie').value.trim() || state.creds.cookie || '';
+  const box    = document.getElementById('debug-result');
+
+  if(!token) { toast('Token pehle save karo!','warn'); return; }
+
+  box.style.display = 'block';
+  box.textContent   = '⏳ Testing credentials...';
+
+  try {
+    const res  = await fetch(`${PROXY}/api/debug`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authToken: token, cookie })
+    });
+    const data = await res.json();
+    box.style.color = data.error ? 'var(--danger)' : 'var(--success)';
+    box.textContent = `HTTP ${data.httpStatus}\n\n${data.body || data.error}`;
+    toast(data.httpStatus === 200 ? '✓ Credentials valid!' : '✗ Credentials issue — check below', data.httpStatus === 200 ? 'success' : 'error');
+  } catch(e) {
+    box.style.color = 'var(--danger)';
+    box.textContent = '✗ ' + e.message + '\n\nServer chalu hai? node server.js';
+    toast('Debug fail: ' + e.message, 'error');
+  }
+}
+
+function saveDefaults() {
+  state.defaults.lang = document.getElementById('set-lang').value;
+  state.defaults.tone = document.getElementById('set-tone').value;
+  state.defaults.fid = parseInt(document.getElementById('set-fid').value);
+  save(); toast('Defaults saved ✓','success');
+}
+
+function toggleIt(id) {
+  document.getElementById(id).classList.toggle('on');
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if(diff < 60000) return 'just now';
+  if(diff < 3600000) return Math.floor(diff/60000)+'m ago';
+  if(diff < 86400000) return Math.floor(diff/3600000)+'h ago';
+  return Math.floor(diff/86400000)+'d ago';
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(function init() {
+  renderTopics();
+  if(state.creds.groq) document.getElementById('inp-groq').value = state.creds.groq;
+  if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
+  // Set defaults
+  document.getElementById('inp-lang').value = state.defaults.lang||'Urdu';
+  document.getElementById('inp-tone').value = state.defaults.tone||'casual and friendly';
+  document.getElementById('inp-fid').value = state.defaults.fid||293;
+  refreshOverview();
+})();
+</script>
+</body>
+</html>
