@@ -1,6 +1,6 @@
-# 🤖 Infinix Club Auto Post & View Bot
+# 🤖 Infinix XClub Auto Post & View Bot
 
-An AI-powered automation tool for [Infinix Club](https://www.infinix.club) — automatically generates and posts discussions using AI, and boosts post views using proxy rotation.
+An AI-powered automation tool for [Infinix XClub](https://www.infinix.club) — automatically generates and posts discussions using AI, and boosts post views using proxy rotation.
 
 ---
 
@@ -8,9 +8,6 @@ An AI-powered automation tool for [Infinix Club](https://www.infinix.club) — a
 
 - 🧠 **AI Post Generator** — Uses Groq (free) to generate human-like forum posts
 - 📝 **Auto Poster** — Automatically submits posts to Infinix Club forum
-- 👁️ **View Bot** — Boosts post views using free proxy rotation
-- 🌍 **Multi-country support** — Rotates country FIDs for wider reach
-- 🔄 **Proxy Rotation** — Fetches free proxies automatically
 
 ---
 
@@ -60,30 +57,6 @@ const TOPIC       = "Your post topic here";   // what to post about
 const LANGUAGE    = "English";                // or Urdu, Hindi, Arabic
 ```
 
-### 4. Configure `infinix_view_bot.js`
-
-```js
-const TID          = "12323274";   // your post thread ID
-const FID          = "293";        // forum category ID
-const TOTAL_VIEWS  = 200;          // how many views to send
-```
-
----
-
-## ▶️ Usage
-
-### Auto Post
-```bash
-node infinix_auto_poster.js
-```
-
-### View Bot
-```bash
-node infinix_view_bot.js
-```
-
----
-
 ## 🍪 How to Get Your Cookie & Token
 
 1. Open [infinix.club](https://www.infinix.club) and **log in**
@@ -122,8 +95,8 @@ This tool is for **educational purposes only**. Use responsibly and in accordanc
 
 ## 👤 Author
 
-**AamnaMalik786**  
-Infinix Club — Super CP Member 🏆
+**Sohail6651**  
+Infinix XClub — Super CP Member 🏆
 
 ---
 
