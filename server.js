@@ -1,36 +1,55 @@
 /**
  * Infinix Club Dashboard — Proxy Server
  * Handles CORS + forwards requests to Anthropic & Infinix Club API
- * 
+ *
  * Setup:
- *   npm install express cors node-fetch@2
+ *   npm install express cors node-fetch@2 form-data
  *   node server.js
  */
 
 const express = require("express");
-const cors    = require("cors");
-const fetch   = require("node-fetch");
-const path    = require("path");
+const cors = require("cors");
+const fetch = require("node-fetch");
+const FormData = require("form-data");
+const path = require("path");
 
-const app  = express();
+const app = express();
 const PORT = 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "20mb" }));
 
 // ── Serve frontend ───────────────────────
 app.use(express.static(path.join(__dirname)));
 
 // ── 1. AI Generate Route ─────────────────
-// Frontend calls: POST /api/generate
 app.post("/api/generate", async (req, res) => {
   const { topic, tone, language, groqKey } = req.body;
-
   if (!topic) return res.status(400).json({ error: "Topic required" });
 
-  const prompt = `You are writing a discussion post for Infinix Club (infinix.club) — a fan community for Infinix smartphone users.
+  // Ai prompt generator
+  const prompt = `
+                  Act as a professional gaming content creator.
+
+Create a viral social media post about "[GAME NAME]".
+
+Requirements:
+- Start with a powerful catchy title (1 line)
+- Write 2/3 short engaging lines about the game
+- Highlight gameplay, story, and graphics
+- Add why gamers love this game
+- Use emojis (🎮🔥⚔️🌍)
+- Keep it short, stylish, and attractive
+- Add 5 trending gaming hashtags
+- Add a call-to-action (Play now / Try it today)
+
+Style:
+- Viral, modern, eye-catching
+
+
 
 Topic: "${topic}"
+
 Tone: ${tone || "casual and friendly"}
 Language: ${language || "Urdu"}
 
@@ -44,7 +63,7 @@ Return ONLY raw JSON (no markdown, no backticks):
 {"title": "Engaging post title here", "content": "Full post content here"}`;
 
   try {
-    // Try Anthropic first (no key needed from frontend)
+    // Try Anthropic first
     const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,10 +73,11 @@ Return ONLY raw JSON (no markdown, no backticks):
         messages: [{ role: "user", content: prompt }]
       })
     });
+// mention this id "@Ayat..........".
 
     if (anthropicRes.ok) {
       const data = await anthropicRes.json();
-      const raw  = data.content?.map(c => c.text || "").join("") || "";
+      const raw = data.content?.map(c => c.text || "").join("") || "";
       const clean = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       return res.json({ success: true, ...parsed });
@@ -83,7 +103,7 @@ Return ONLY raw JSON (no markdown, no backticks):
     const groqData = await groqRes.json();
     if (!groqRes.ok) throw new Error(groqData.error?.message || "Groq error");
 
-    const raw2   = groqData.choices?.[0]?.message?.content || "";
+    const raw2 = groqData.choices?.[0]?.message?.content || "";
     const clean2 = raw2.replace(/```json|```/g, "").trim();
     const parsed2 = JSON.parse(clean2);
     return res.json({ success: true, ...parsed2 });
@@ -94,78 +114,154 @@ Return ONLY raw JSON (no markdown, no backticks):
   }
 });
 
-// ── 2. Publish to Infinix Club ────────────
-// Frontend calls: POST /api/publish
+// ── 2. Image Upload → Infinix CDN ────────
+// Frontend sends base64 → server converts to multipart/form-data
+// → POST https://infinix.club/v5/content/imageUpload
+// → Returns { aid, url } where aid is used in covers[] array
+app.post("/api/upload-image", async (req, res) => {
+  const { base64, fileName, authToken, cookie } = req.body;
+
+  if (!base64) return res.status(400).json({ error: "No image data" });
+  if (!authToken) return res.status(400).json({ error: "Auth token required" });
+
+  // Strip "data:image/jpeg;base64," prefix
+  const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches) return res.status(400).json({ error: "Invalid base64 format" });
+
+  const mimeType = matches[1];
+  const buffer = Buffer.from(matches[2], "base64");
+  const safeName = fileName || "cover.jpg";
+
+  console.log(`\n━━━ IMAGE UPLOAD ━━━`);
+  console.log(`File: ${safeName} | MIME: ${mimeType} | Size: ${Math.round(buffer.length / 1024)}KB`);
+
+  try {
+    const form = new FormData();
+    form.append("file", buffer, {
+      filename: safeName,
+      contentType: mimeType
+    });
+
+    const uploadRes = await fetch("https://infinix.club/v5/content/imageUpload", {
+      method: "POST",
+      headers: {
+        ...form.getHeaders(),
+        "xclub-authorization": authToken,
+        "cookie": cookie || "",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+        "referer": "https://infinix.club/note/thread",
+        "origin": "https://infinix.club",
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
+        "accept-language-api": "en",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin"
+      },
+      body: form
+    });
+
+    const rawText = await uploadRes.text();
+    console.log("Infinix imageUpload HTTP:", uploadRes.status);
+    console.log("Infinix imageUpload response:", rawText.slice(0, 400));
+
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch { throw new Error("Non-JSON from Infinix: " + rawText.slice(0, 200)); }
+
+    // Success: { status: 1, data: { aid: "12808379", fileUrl: "https://..." } }
+    if (data.status === 1 && data.data?.aid) {
+      console.log(`✓ Upload OK — aid: ${data.data.aid} | url: ${data.data.fileUrl}`);
+      return res.json({
+        success: true,
+        aid: String(data.data.aid),   // covers array uses string aid
+        url: data.data.fileUrl         // CDN URL for preview
+      });
+    }
+
+    throw new Error(data.msg || data.message || "Infinix image upload failed");
+
+  } catch (err) {
+    console.error("Image upload error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── 3. Publish to Infinix Club ────────────
 app.post("/api/publish", async (req, res) => {
-  const { title, content, fid, authToken, cookie, imageUrl, topid } = req.body;
+  const { title, content, fid, authToken, cookie, imageAid, topid } = req.body;
 
   if (!title || !content) return res.status(400).json({ error: "Title and content required" });
-  if (!authToken)          return res.status(400).json({ error: "Auth token required" });
+  if (!authToken) return res.status(400).json({ error: "Auth token required" });
 
-  // Convert to BBCode
-  // If image URL provided, prepend it as BBCode img tag
-  let bbContent = content
+  // Build BBCode body — exactly like working curl: [div][p]...[/p][/div]
+  const bbContent = content
     .split("\n")
     .filter(l => l.trim())
     .map(l => `[p]${l.trim()}[/p]`)
-    .join("\n");
+    .join("");
 
-  if (imageUrl && imageUrl.trim()) {
-    bbContent = `[img]${imageUrl.trim()}[/img]\n` + bbContent;
-  }
+  // covers: array of aid strings — exactly as Infinix web app sends
+  const covers = imageAid ? [String(imageAid)] : [];
 
-  // covers array — Infinix Club uses this for cover image
-  const covers = (imageUrl && imageUrl.trim())
-    ? [{ url: imageUrl.trim(), width: 0, height: 0 }]
-    : [];
-
+  // Payload exactly matching working curl:
+  // {"at_list_current":"","push_time":...,"message":"[div][p]...[/p][/div]",
+  //  "aids":"","subject":"...","typeid":0,"thread_tag":0,"activity":0,
+  //  "spu_id":"","phonetype":"pc","covers":[...],"country_fid":293,
+  //  "is_author_only":0,"topid":6675163}
   const payload = {
-    subject:          title,
-    message:          bbContent,
-    country_fid:      parseInt(fid) || 293,
-    fid:              parseInt(fid) || 293,
-    typeid:           0,
-    topid:            topid ? parseInt(topid) : "",
-    thread_tag:       1,
-    phonetype:        "infinix HOT 10",
+    at_list_current: "",
+    push_time: Math.floor(Date.now() / 1000),
+    message: `[div]${bbContent}[/div]`,
+    aids: "",
+    subject: title,
+    typeid: 0,
+    thread_tag: 0,
+    activity: 0,
+    spu_id: "",
+    phonetype: "pc",
     covers,
-    aids:             "",
-    spu_id:           "",
-    activity:         0,
-    is_author_only:   0,
-    at_list_current:  "",
-    push_time:        Math.floor(Date.now() / 1000)
+    country_fid: parseInt(fid) || 293,
+    is_author_only: 0,
+    topid: topid ? parseInt(topid) : 6675163
   };
 
-  // ── Debug: log exactly what we're sending ──
   console.log("\n━━━ PUBLISH REQUEST ━━━");
-  console.log("Payload:", JSON.stringify(payload, null, 2));
-  console.log("Token (first 30):", authToken.substring(0, 30) + "...");
-  console.log("Cookie present:", !!cookie);
+  console.log("Payload:", JSON.stringify(payload));
+  console.log("Token (first 40):", authToken.substring(0, 40) + "...");
+  console.log("Cookie (first 40):", (cookie || "").substring(0, 40) + "...");
 
   try {
-    const response = await fetch("https://www.infinix.club/v5/content/thread", {
+    const response = await fetch("https://infinix.club/v5/content/thread", {
       method: "POST",
       headers: {
-        "Content-Type":        "application/json",
-        "Xclub-Authorization": authToken,
-        "Authorization":       `Bearer ${authToken}`,
-        "Cookie":              cookie || "",
-        "User-Agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
-        "Referer":             "https://www.infinix.club/note/thread",
-        "Origin":              "https://www.infinix.club",
-        "Accept":              "application/json, text/plain, */*",
-        "Accept-Language":     "en-US,en;q=0.9",
+        "content-type": "application/json",
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9,ur;q=0.8",
+        "accept-language-api": "en",
+        "xclub-authorization": authToken,
+        "cookie": cookie || "",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+        "referer": "https://infinix.club/note/thread",
+        "origin": "https://infinix.club",
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "priority": "u=1, i"
       },
       body: JSON.stringify(payload)
     });
 
-    // Read raw text first so we never crash on non-JSON
     const rawText = await response.text();
     console.log("━━━ INFINIX RESPONSE ━━━");
     console.log("HTTP Status:", response.status);
     console.log("Body:", rawText);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     let data;
     try { data = JSON.parse(rawText); }
@@ -179,7 +275,6 @@ app.post("/api/publish", async (req, res) => {
         url: `https://www.infinix.club/t/${data?.data?.tid}`
       });
     } else {
-      // Return full Infinix error to frontend so user can see it
       res.status(400).json({
         error: data.msg || data.message || "Infinix Club ne reject kar diya",
         infinix_status: data.status,
@@ -187,84 +282,87 @@ app.post("/api/publish", async (req, res) => {
         raw: data
       });
     }
+
   } catch (err) {
     console.error("Publish error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── 3. Fetch topics for fid ───────────────
-// Calls /v5/content/category?fid=X to get topic list
-// Each topic has topid (e.g. 6675163 = Daily Thread)
+// ── 4. Fetch topics ───────────────────────
 app.get("/api/categories", async (req, res) => {
   const { fid = 293, authToken, cookie } = req.query;
 
   const HEADERS = {
     "Xclub-Authorization": authToken || "",
-    "Authorization":       `Bearer ${authToken || ""}`,
-    "Cookie":              cookie || "",
-    "User-Agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
-    "Accept":              "application/json, text/plain, */*",
-    "Accept-Language":     "en-US,en;q=0.9",
-    "Referer":             `https://www.infinix.club/note/thread`,
+    "Authorization": `Bearer ${authToken || ""}`,
+    "Cookie": cookie || "",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.infinix.club/note/thread",
   };
 
   try {
-    // Primary: category list
-    const r1   = await fetch(`https://www.infinix.club/v5/content/category?fid=${fid}`, { headers: HEADERS });
+    const r1 = await fetch(`https://www.infinix.club/v5/content/category?fid=${fid}`, { headers: HEADERS });
     const txt1 = await r1.text();
     console.log("Category raw:", txt1.slice(0, 500));
-    const d1   = JSON.parse(txt1);
+    const d1 = JSON.parse(txt1);
 
-    // API returns data.list array with {topid, topic_name, icon, ...}
     const rawList = d1?.data?.list || d1?.data?.lists || d1?.data || [];
 
     if (Array.isArray(rawList) && rawList.length > 0) {
       const topics = rawList.map(t => ({
         topid: t.topid || t.id,
-        name:  t.topic_name || t.name || t.title,
-        icon:  t.icon || t.img || "",
-        desc:  t.description || ""
+        name: t.topic_name || t.name || t.title,
+        icon: t.icon || t.img || "",
+        desc: t.description || ""
       }));
       return res.json({ success: true, topics });
     }
 
-    // Fallback: known Pakistan topics hardcoded from network analysis
-    console.log("Category list empty — using known Pakistan topics");
     return res.json({
       success: true,
+      fallback: true,
       topics: [
-        { topid: 6675164, name: "PlayStation Universe",   icon: "", desc: "Sony's PlayStation (PS) revolutionized 3D gaming in 1994." },
-        { topid: 6675163, name: "Daily Thread",   icon: "", desc: "Rozana ki baat cheet" },
-        { topid: 6674907, name: "V4 GAMES",   icon: "", desc: "V4 Games main gaming fans gameplay videos dekhain" },
-        { topid: 0,       name: "No Topic",        icon: "", desc: "Koi tag nahi" },
-      ],
-      fallback: true
+        { topid: 6675164, name: "PlayStation Universe", icon: "", desc: "Sony's PlayStation revolutionized 3D gaming in 1994." },
+        { topid: 6675163, name: "Daily Thread", icon: "", desc: "Rozana ki baat cheet" },
+        { topid: 6674907, name: "V4 GAMES", icon: "", desc: "V4 Games gaming fans ke liye" },
+        { topid: 0, name: "No Topic", icon: "", desc: "Koi tag nahi" },
+      ]
     });
 
-  } catch(e) {
+  } catch (e) {
     console.error("Categories error:", e.message);
     res.status(500).json({ error: e.message });
   }
 });
 
-// ── 4. Debug: test credentials ────────────
+// ── 5. Debug credentials ──────────────────
 app.post("/api/debug", async (req, res) => {
   const { authToken, cookie } = req.body;
   try {
-    const r = await fetch("https://www.infinix.club/v5/user/info", {
+    const r = await fetch("https://infinix.club/v5/user/auth?scene=default", {
       headers: {
-        "Xclub-Authorization": authToken || "",
-        "Authorization":       `Bearer ${authToken || ""}`,
-        "Cookie":              cookie || "",
-        "User-Agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept":              "application/json",
+        "xclub-authorization": authToken || "",
+        "Cookie": cookie || "",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9,ur;q=0.8",
+        "accept-language-api": "en",
+        "Referer": "https://infinix.club/foryou",
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
       }
     });
     const text = await r.text();
-    console.log("Debug user info:", text);
-    res.json({ httpStatus: r.status, body: text.slice(0, 500) });
-  } catch(e) {
+    console.log("Debug auth response:", text.slice(0, 300));
+    res.json({ httpStatus: r.status, body: text.slice(0, 800) });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
