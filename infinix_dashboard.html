@@ -35,7 +35,6 @@
     overflow-x: hidden;
   }
 
-  /* grid bg */
   body::before {
     content: '';
     position: fixed;
@@ -48,7 +47,6 @@
     z-index: 0;
   }
 
-  /* ── TOP NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     background: rgba(10,10,15,0.85);
@@ -67,10 +65,7 @@
     display: flex; align-items: center; gap: 8px;
     white-space: nowrap;
   }
-  .logo-x {
-    color: var(--accent);
-    font-size: 22px;
-  }
+  .logo-x { color: var(--accent); font-size: 22px; }
 
   nav .sep { flex: 1; }
 
@@ -113,7 +108,6 @@
     font-family: 'Syne', sans-serif;
   }
 
-  /* ── LAYOUT ── */
   .shell {
     position: relative; z-index: 1;
     display: grid;
@@ -121,7 +115,6 @@
     min-height: calc(100vh - 60px);
   }
 
-  /* ── SIDEBAR ── */
   aside {
     background: var(--surface);
     border-right: 1px solid var(--border);
@@ -167,7 +160,6 @@
     font-weight: 600;
   }
 
-  /* ── MAIN ── */
   main {
     padding: 32px;
     display: flex; flex-direction: column; gap: 28px;
@@ -177,7 +169,6 @@
   .page { display: none; flex-direction: column; gap: 28px; }
   .page.active { display: flex; }
 
-  /* ── PAGE HEADER ── */
   .page-header {
     display: flex; align-items: flex-start; justify-content: space-between;
     flex-wrap: wrap; gap: 16px;
@@ -192,7 +183,6 @@
   .page-title span { color: var(--accent); }
   .page-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
-  /* ── STATS GRID ── */
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -209,7 +199,6 @@
     transition: border-color 0.2s, transform 0.2s;
   }
   .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
-
   .stat-card::after {
     content: '';
     position: absolute;
@@ -234,7 +223,6 @@
   .stat-delta { font-size: 11px; color: var(--success); margin-top: 8px; }
   .stat-delta.down { color: var(--danger); }
 
-  /* ── POST COMPOSER ── */
   .composer {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -298,7 +286,101 @@
   select option { background: var(--surface2); }
   textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
 
-  /* ── BUTTONS ── */
+  /* ── IMAGE UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--bg);
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.04);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+  .upload-zone input[type="file"]:focus { box-shadow: none; border: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .upload-text strong { color: var(--accent); display: block; margin-bottom: 2px; font-size: 13px; }
+  .upload-text span { font-size: 10px; }
+
+  /* image preview strip */
+  .img-preview-box {
+    display: none;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .img-preview-box img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+  }
+  .img-preview-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px 12px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.75));
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .img-preview-name { font-size: 11px; color: rgba(255,255,255,0.75); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .img-preview-size { font-size: 10px; color: rgba(255,255,255,0.5); }
+  .img-clear-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 12px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .img-clear-btn:hover { background: var(--danger); }
+
+  /* upload progress */
+  .upload-progress {
+    display: none;
+    margin-top: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .upload-progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 4px;
+  }
+  .upload-status {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: none;
+    text-align: center;
+  }
+
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 20px;
@@ -310,29 +392,16 @@
     transition: all 0.15s;
     letter-spacing: 0.3px;
   }
-  .btn-primary {
-    background: var(--accent);
-    color: #000;
-    font-weight: 700;
-  }
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
   .btn-primary:hover { background: #00c8e0; box-shadow: 0 4px 20px rgba(0,229,255,0.4); transform: translateY(-1px); }
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-danger {
-    background: rgba(255,59,107,0.1);
-    color: var(--danger);
-    border: 1px solid rgba(255,59,107,0.3);
-  }
+  .btn-danger { background: rgba(255,59,107,0.1); color: var(--danger); border: 1px solid rgba(255,59,107,0.3); }
   .btn-danger:hover { background: var(--danger); color: #fff; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
   .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-  /* ── AI RESULT ── */
   .ai-result {
     background: var(--bg);
     border: 1px solid rgba(0,229,255,0.2);
@@ -359,7 +428,6 @@
     white-space: pre-wrap;
   }
 
-  /* ── POST LOG ── */
   .log-table { width: 100%; border-collapse: collapse; }
   .log-table th {
     text-align: left;
@@ -394,12 +462,7 @@
   .tid-link { color: var(--accent); text-decoration: none; font-size: 11px; }
   .tid-link:hover { text-decoration: underline; }
 
-  /* ── SCHEDULE GRID ── */
-  .sched-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-  }
+  .sched-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
   .sched-day-label {
     text-align: center;
     font-size: 10px;
@@ -434,7 +497,6 @@
   }
   .sched-post:hover { background: rgba(0,229,255,0.2); }
 
-  /* ── SETTINGS ── */
   .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .settings-card {
     background: var(--surface);
@@ -450,7 +512,6 @@
     display: flex; align-items: center; gap: 6px;
   }
 
-  /* ── TOGGLE ── */
   .toggle-row {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 0;
@@ -481,7 +542,6 @@
   }
   .toggle.on::after { transform: translateX(16px); }
 
-  /* ── TOAST ── */
   #toast-container {
     position: fixed; bottom: 24px; right: 24px;
     z-index: 9999;
@@ -503,7 +563,6 @@
   .toast.warn { border-left-color: var(--warning); }
   @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-  /* ── LOADING SPINNER ── */
   .spinner {
     display: inline-block;
     width: 14px; height: 14px;
@@ -514,7 +573,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── SECTION CARD ── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -529,12 +587,10 @@
   .card-header h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
   .card-body { padding: 20px; }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* ── TOPIC CARDS ── */
   .topic-card {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 14px;
@@ -548,11 +604,7 @@
     user-select: none;
   }
   .topic-card:hover { border-color: var(--accent); color: var(--text); }
-  .topic-card.selected {
-    border-color: var(--accent);
-    background: rgba(0,229,255,0.07);
-    color: var(--accent);
-  }
+  .topic-card.selected { border-color: var(--accent); background: rgba(0,229,255,0.07); color: var(--accent); }
   .topic-card .t-icon {
     width: 32px; height: 32px; border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
@@ -582,7 +634,6 @@
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <div class="logo"><span class="logo-x">✕</span> Infinix<span style="color:var(--muted);font-weight:400">Club</span> Dashboard</div>
   <div class="sep"></div>
@@ -590,10 +641,8 @@
   <div class="user-chip"><div class="avatar">SA</div> Sohail6651</div>
 </nav>
 
-<!-- SHELL -->
 <div class="shell">
 
-<!-- SIDEBAR -->
 <aside>
   <div class="side-label">Navigation</div>
   <button class="side-btn active" onclick="nav('overview')"><span class="icon">◈</span> Overview</button>
@@ -604,7 +653,6 @@
   <button class="side-btn" onclick="nav('settings')"><span class="icon">⊙</span> Settings</button>
 </aside>
 
-<!-- MAIN -->
 <main>
 
 <!-- ═══ OVERVIEW ═══ -->
@@ -612,7 +660,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Content <span>Overview</span></div>
-      <div class="page-sub">March 2026 — Sohail6651</div>
+      <div class="page-sub">April 2026 — Sohail6651</div>
     </div>
     <button class="btn btn-primary" onclick="nav('compose')">✦ New Post</button>
   </div>
@@ -652,11 +700,7 @@
     <div class="card-body" style="padding:0">
       <table class="log-table" id="recent-table">
         <thead><tr>
-          <th>Title</th>
-          <th>Topic</th>
-          <th>Status</th>
-          <th>Thread</th>
-          <th>Time</th>
+          <th>Title</th><th>Topic</th><th>Status</th><th>Thread</th><th>Time</th>
         </tr></thead>
         <tbody id="recent-tbody">
           <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No posts yet — compose your first post!</td></tr>
@@ -681,7 +725,7 @@
     <div class="form-row">
       <div class="form-group">
         <label>Topic / Subject</label>
-        <input type="text" id="inp-topic" placeholder="e.g. Infinix Gaming Phones saste mein..." value="Infinix Gaming Phones Saste Mein Powerful Performance?">
+        <input type="text" id="inp-topic" placeholder="e.g. Infinix Gaming Phones Budget Performance..." value="Infinix Gaming Phones — Budget Powerhouses?">
       </div>
       <div class="form-group">
         <label>Language</label>
@@ -716,14 +760,13 @@
       </div>
     </div>
 
-    <!-- Thread Topic / typeid -->
     <div class="form-group" style="margin-bottom:16px">
       <label style="display:flex;align-items:center;justify-content:space-between">
         🏷 Thread Topic
         <button onclick="loadTopics()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;font-family:inherit;padding:0;letter-spacing:0.5px">↻ Reload</button>
       </label>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px" id="topic-grid">
-        <div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Token save karo phir topics load hongi...</div>
+        <div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Save token first, then topics will load...</div>
       </div>
       <input type="hidden" id="inp-topid" value="0">
     </div>
@@ -739,26 +782,37 @@
       </div>
     </div>
 
-    <!-- Cover Image -->
+    <!-- ── COVER IMAGE UPLOAD (AI Composer) ── -->
     <div class="form-group" style="margin-bottom:16px">
-      <label>🖼 Cover Image URL (optional)</label>
-      <div style="display:flex;gap:10px;align-items:center">
-        <input type="url" id="inp-image-url" placeholder="https://example.com/image.jpg" oninput="previewImage()" style="flex:1">
-        <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px;white-space:nowrap" onclick="clearImage()">✕ Clear</button>
+      <label>🖼 Cover Image — Upload from Computer</label>
+
+      <div class="upload-zone" id="ai-upload-zone"
+           ondragover="handleDragOver(event,'ai')"
+           ondragleave="handleDragLeave(event,'ai')"
+           ondrop="handleDrop(event,'ai')">
+        <input type="file" id="ai-file-input" accept="image/*"
+               onchange="handleFileSelect(this,'ai')">
+        <div class="upload-icon">🖼</div>
+        <div class="upload-text">
+          <strong>Select Image or Drag & Drop</strong>
+          <span>JPG, PNG, WebP, GIF — max 10MB</span>
+        </div>
       </div>
+
+      <!-- Progress -->
+      <div class="upload-progress" id="ai-upload-progress">
+        <div class="upload-progress-bar" id="ai-upload-bar"></div>
+      </div>
+      <div class="upload-status" id="ai-upload-status"></div>
+
       <!-- Preview -->
-      <div id="img-preview-wrap" style="display:none;margin-top:12px;position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;max-height:220px">
-        <img id="img-preview" src="" alt="Cover Preview"
-          style="width:100%;max-height:220px;object-fit:cover;display:block">
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;
-          background:linear-gradient(transparent,rgba(0,0,0,0.7));
-          font-size:11px;color:rgba(255,255,255,0.7)">Cover Image Preview</div>
-        <div id="img-status" style="position:absolute;top:8px;right:8px;
-          background:rgba(0,214,143,0.9);color:#000;font-size:10px;font-weight:700;
-          padding:3px 8px;border-radius:4px;display:none">✓ Valid</div>
-      </div>
-      <div id="img-error" style="display:none;margin-top:6px;font-size:11px;color:var(--danger)">
-        ⚠ Image load nahi hui — URL check karo
+      <div class="img-preview-box" id="ai-img-preview-box">
+        <img id="ai-img-preview-img" src="" alt="Cover Preview">
+        <button class="img-clear-btn" onclick="clearFileUpload('ai')" title="Hatao">✕</button>
+        <div class="img-preview-overlay">
+          <span class="img-preview-name" id="ai-img-name">—</span>
+          <span class="img-preview-size" id="ai-img-size">—</span>
+        </div>
       </div>
     </div>
 
@@ -796,16 +850,39 @@
         <label>Post Content</label>
         <textarea id="man-content" placeholder="Write your post here..."></textarea>
       </div>
+
+      <!-- ── COVER IMAGE UPLOAD (Manual Compose) ── -->
       <div class="form-group" style="margin-bottom:16px">
-        <label>🖼 Cover Image URL (optional)</label>
-        <div style="display:flex;gap:10px;align-items:center">
-          <input type="url" id="man-image-url" placeholder="https://example.com/image.jpg" oninput="previewManImage()" style="flex:1">
-          <button class="btn btn-secondary" style="padding:8px 14px;font-size:12px" onclick="document.getElementById('man-image-url').value='';document.getElementById('man-img-wrap').style.display='none'">✕</button>
+        <label>🖼 Cover Image — Upload from Computer</label>
+
+        <div class="upload-zone" id="man-upload-zone"
+             ondragover="handleDragOver(event,'man')"
+             ondragleave="handleDragLeave(event,'man')"
+             ondrop="handleDrop(event,'man')">
+          <input type="file" id="man-file-input" accept="image/*"
+                 onchange="handleFileSelect(this,'man')">
+          <div class="upload-icon">🖼</div>
+          <div class="upload-text">
+            <strong>Select Image or Drag & Drop</strong>
+            <span>JPG, PNG, WebP, GIF — max 10MB</span>
+          </div>
         </div>
-        <div id="man-img-wrap" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:160px">
-          <img id="man-img-preview" src="" style="width:100%;max-height:160px;object-fit:cover;display:block" alt="">
+
+        <div class="upload-progress" id="man-upload-progress">
+          <div class="upload-progress-bar" id="man-upload-bar"></div>
+        </div>
+        <div class="upload-status" id="man-upload-status"></div>
+
+        <div class="img-preview-box" id="man-img-preview-box">
+          <img id="man-img-preview-img" src="" alt="Cover Preview">
+          <button class="img-clear-btn" onclick="clearFileUpload('man')" title="Hatao">✕</button>
+          <div class="img-preview-overlay">
+            <span class="img-preview-name" id="man-img-name">—</span>
+            <span class="img-preview-size" id="man-img-size">—</span>
+          </div>
         </div>
       </div>
+
       <button class="btn btn-primary" onclick="manualPublish()">🚀 Publish Manual Post</button>
     </div>
   </div>
@@ -816,7 +893,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Content <span>Schedule</span></div>
-      <div class="page-sub">March 2026 — Weekly planner</div>
+      <div class="page-sub">April 2026 — Weekly planner</div>
     </div>
     <button class="btn btn-primary" onclick="nav('compose')">+ Add Post</button>
   </div>
@@ -842,10 +919,7 @@
     <div class="card-body" style="padding:0">
       <table class="log-table" id="sched-table">
         <thead><tr>
-          <th>Title</th>
-          <th>Topic</th>
-          <th>Scheduled For</th>
-          <th>Actions</th>
+          <th>Title</th><th>Topic</th><th>Scheduled For</th><th>Actions</th>
         </tr></thead>
         <tbody id="sched-tbody">
           <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">No scheduled posts</td></tr>
@@ -881,13 +955,7 @@
     <div style="padding:0">
       <table class="log-table">
         <thead><tr>
-          <th>Title</th>
-          <th>Topic</th>
-          <th>Language</th>
-          <th>Status</th>
-          <th>Thread ID</th>
-          <th>Time</th>
-          <th>Actions</th>
+          <th>Title</th><th>Topic</th><th>Language</th><th>Status</th><th>Thread ID</th><th>Time</th><th>Actions</th>
         </tr></thead>
         <tbody id="log-tbody">
           <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">No posts in log</td></tr>
@@ -923,6 +991,7 @@
       </div>
       <button class="btn btn-primary" onclick="saveCredentials()">💾 Save Credentials</button>
       <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="debugCredentials()">🔍 Test Credentials</button>
+      <button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:var(--warning);color:var(--warning)" onclick="debugPublish()">🧪 Test Publish (Dry Run)</button>
       <div id="debug-result" style="display:none;margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all"></div>
     </div>
 
@@ -990,14 +1059,160 @@
 </main>
 </div>
 
-<!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
 <script>
 // ══════════════════════════════════════════
-//  THREAD TOPICS — loaded live from Infinix API
+//  IMAGE UPLOAD — File se (no URL needed)
 // ══════════════════════════════════════════
-const TOPIC_ICONS = ['📝','📅','⭐','💡','🙋','🎉','📰','📸','🔥','🎮','💬','🏆','🛠','📊','🎯','✨'];
+
+// imageData stores: { base64: 'data:image/...', cdnUrl: '', fileName: '', size: 0 }
+const imageStore = { ai: null, man: null };
+
+function handleDragOver(e, prefix) {
+  e.preventDefault();
+  document.getElementById(prefix + '-upload-zone').classList.add('drag-over');
+}
+function handleDragLeave(e, prefix) {
+  document.getElementById(prefix + '-upload-zone').classList.remove('drag-over');
+}
+function handleDrop(e, prefix) {
+  e.preventDefault();
+  document.getElementById(prefix + '-upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processImageFile(file, prefix);
+}
+function handleFileSelect(input, prefix) {
+  const file = input.files[0];
+  if (file) processImageFile(file, prefix);
+}
+
+function processImageFile(file, prefix) {
+  if (!file.type.startsWith('image/')) {
+    toast('Only image files are allowed!', 'warn'); return;
+  }
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    toast('Image must be smaller than 10MB!', 'warn'); return;
+  }
+
+  const reader = new FileReader();
+
+  // Show progress animation
+  const progressWrap = document.getElementById(prefix + '-upload-progress');
+  const progressBar  = document.getElementById(prefix + '-upload-bar');
+  const statusEl     = document.getElementById(prefix + '-upload-status');
+
+  progressWrap.style.display = 'block';
+  statusEl.style.display = 'block';
+  statusEl.textContent = '⏳ Loading image...';
+
+  let fakeProgress = 0;
+  const progressInterval = setInterval(() => {
+    fakeProgress = Math.min(fakeProgress + 15, 85);
+    progressBar.style.width = fakeProgress + '%';
+  }, 80);
+
+  reader.onload = (e) => {
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+
+    const base64 = e.target.result; // full data URL e.g. data:image/jpeg;base64,...
+
+    imageStore[prefix] = {
+      base64: base64,
+      fileName: file.name,
+      size: file.size
+    };
+
+    // Show preview
+    const previewBox = document.getElementById(prefix + '-img-preview-box');
+    const previewImg = document.getElementById(prefix + '-img-preview-img');
+    const nameEl     = document.getElementById(prefix + '-img-name');
+    const sizeEl     = document.getElementById(prefix + '-img-size');
+
+    previewImg.src = base64;
+    nameEl.textContent = file.name;
+    sizeEl.textContent = formatBytes(file.size);
+    previewBox.style.display = 'block';
+
+    // Hide zone text, keep zone for re-select
+    statusEl.textContent = '✓ Image ready — will be uploaded when publishing';
+    statusEl.style.color = 'var(--success)';
+
+    // If ai prefix, also update thumb in result section
+    if (prefix === 'ai') {
+      document.getElementById('ai-img-preview').src = base64;
+      document.getElementById('ai-img-thumb').style.display = 'block';
+    }
+
+    toast('✓ Image selected: ' + file.name, 'success');
+
+    setTimeout(() => {
+      progressWrap.style.display = 'none';
+    }, 1000);
+  };
+
+  reader.onerror = () => {
+    clearInterval(progressInterval);
+    progressWrap.style.display = 'none';
+    statusEl.style.display = 'none';
+    toast('Failed to read image file!', 'error');
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function clearFileUpload(prefix) {
+  imageStore[prefix] = null;
+  document.getElementById(prefix + '-img-preview-box').style.display = 'none';
+  document.getElementById(prefix + '-upload-progress').style.display = 'none';
+  document.getElementById(prefix + '-upload-status').style.display = 'none';
+  document.getElementById(prefix + '-file-input').value = '';
+  if (prefix === 'ai') {
+    document.getElementById('ai-img-thumb').style.display = 'none';
+    document.getElementById('ai-img-preview').src = '';
+  }
+  toast('Image removed', 'warn');
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Upload image to Infinix CDN → returns { aid, url }
+// aid is used in covers[] array, url is CDN link
+async function uploadImageToInfinix(prefix) {
+  if (!imageStore[prefix]) return null;
+
+  const base64    = imageStore[prefix].base64;
+  const fileName  = imageStore[prefix].fileName;
+  const authToken = state.creds.token || document.getElementById('inp-token')?.value.trim() || '';
+  const cookie    = state.creds.cookie || '';
+
+  if (!authToken) {
+    toast('⚠ Auth Token not found — skipping image', 'warn');
+    return null;
+  }
+
+  const res = await fetch(`${PROXY}/api/upload-image`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ base64, fileName, authToken, cookie })
+  });
+
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'Image upload failed');
+
+  toast(`✓ Image uploaded to Infinix CDN`, 'success');
+  return { aid: data.aid, url: data.url };
+}
+
+// ══════════════════════════════════════════
+//  THREAD TOPICS
+// ══════════════════════════════════════════
 let loadedTopics = [];
 
 async function loadTopics() {
@@ -1008,7 +1223,7 @@ async function loadTopics() {
   const cookie = state.creds.cookie || '';
   const fid    = document.getElementById('inp-fid')?.value || 293;
 
-  grid.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Topics load ho rahi hain...</div>`;
+  grid.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px;grid-column:1/-1">⏳ Loading topics...</div>`;
 
   try {
     const params = new URLSearchParams({ fid });
@@ -1019,12 +1234,10 @@ async function loadTopics() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // server returns { topics: [{topid, name, icon, desc}] }
-    const list = data.topics || [];
-
+    const list   = data.topics || [];
     const emojis = ['📅','⭐','💡','🙋','🎉','📰','📸','🔥','🎮','💬','🏆','🛠'];
     const seen   = new Set();
-    const merged = [{ topid: 0, name: 'No Topic', emoji: '📝', desc: 'Koi tag nahi' }];
+    const merged = [{ topid: 0, name: 'No Topic', emoji: '📝', desc: 'No tag' }];
     seen.add(0);
 
     list.forEach((t, i) => {
@@ -1034,36 +1247,26 @@ async function loadTopics() {
       }
     });
 
-    // Always ensure Daily Thread 6675163 exists
-    if (!seen.has(6675163)) {
-      merged.splice(1, 0, { topid: 6675163, name: 'Daily Thread', emoji: '📅', desc: 'Rozana ki post' });
-    }
-    // Always ensure Daily Thread 6674907 exists
-    if (!seen.has(6674907)) {
-      merged.splice(1, 0, { topid: 6674907, name: 'V4 GAMES', emoji: '📅', desc: 'V4 Games main gaming fans gameplay videos dekhain' });
-    }
-       // Always ensure Daily Thread 6675164 exists
-    if (!seen.has(6675164)) {
-      merged.splice(1, 0, { topid: 6675164, name: 'PlayStation Universe', emoji: '📅', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' });
-    }
-
+    if (!seen.has(6675163)) merged.splice(1, 0, { topid: 6675163, name: 'Daily Thread', emoji: '📅', desc: 'Daily posts' });
+    if (!seen.has(6674907)) merged.splice(1, 0, { topid: 6674907, name: 'V4 GAMES', emoji: '📅', desc: 'Gaming videos for V4 Games fans' });
+    if (!seen.has(6675164)) merged.splice(1, 0, { topid: 6675164, name: 'PlayStation Universe', emoji: '📅', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' });
 
     loadedTopics = merged;
     renderTopicCards();
-    toast(data.fallback ? '⚠ Fallback topics' : `✓ ${merged.length - 1} topics loaded`, data.fallback ? 'warn' : 'success');
+    toast(data.fallback ? '⚠ Using fallback topics' : `✓ ${merged.length - 1} topics loaded`, data.fallback ? 'warn' : 'success');
 
   } catch(e) {
     console.warn('Topic load failed:', e.message);
     loadedTopics = [
-      { topid: 0,       name: 'No Topic',       emoji: '📝', desc: 'Koi tag nahi' },
-      { topid: 6675163, name: 'Daily Thread',   emoji: '📅', desc: 'Rozana ki post' },
-      { topid: 6674907, name: 'V4 GAMES',         emoji: '⭐', desc: 'V4 Games main gaming fans gameplay videos dekhain' },
-      { topid: 6675164, name: 'PlayStation Universe',  emoji: '💡', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' },
-      { topid: 4,       name: 'Help & Support', emoji: '🙋', desc: 'Koi masla?' },
-      { topid: 5,       name: 'Off Topic',      emoji: '🎉', desc: 'Fun stuff' },
+      { topid: 0,       name: 'No Topic',             emoji: '📝', desc: 'No tag' },
+      { topid: 6675163, name: 'Daily Thread',         emoji: '📅', desc: 'Daily posts' },
+      { topid: 6674907, name: 'V4 GAMES',             emoji: '⭐', desc: 'Gaming videos for V4 Games fans' },
+      { topid: 6675164, name: 'PlayStation Universe', emoji: '💡', desc: 'Sonys PlayStation (PS) revolutionized 3D gaming in 1994.' },
+      { topid: 4,       name: 'Help & Support',       emoji: '🙋', desc: 'Any issue?' },
+      { topid: 5,       name: 'Off Topic',            emoji: '🎉', desc: 'Fun stuff' },
     ];
     renderTopicCards();
-    toast('Offline topics — server se connect karo', 'warn');
+    toast('Offline topics — please connect server', 'warn');
   }
 }
 
@@ -1071,13 +1274,10 @@ function renderTopicCards() {
   const grid = document.getElementById('topic-grid');
   if (!grid) return;
   const current = parseInt(document.getElementById('inp-topid').value) || 0;
-
   grid.innerHTML = loadedTopics.map(t => `
-    <div class="topic-card ${t.topid === current ? 'selected' : ''}"
-         id="tc-${t.topid}" onclick="selectTopic(${t.topid})">
+    <div class="topic-card ${t.topid === current ? 'selected' : ''}" id="tc-${t.topid}" onclick="selectTopic(${t.topid})">
       <div class="t-icon">${t.img
-        ? `<img src="${t.img}" style="width:22px;height:22px;object-fit:contain;border-radius:3px"
-               onerror="this.parentNode.textContent='${t.emoji}'">`
+        ? `<img src="${t.img}" style="width:22px;height:22px;object-fit:contain;border-radius:3px" onerror="this.parentNode.textContent='${t.emoji}'">`
         : t.emoji}</div>
       <div class="t-info">
         <div class="t-name">${t.name}</div>
@@ -1096,32 +1296,28 @@ function selectTopic(id) {
     c.querySelector('.t-check').textContent = '';
   });
   const card = document.getElementById('tc-' + id);
-  if (card) {
-    card.classList.add('selected');
-    card.querySelector('.t-check').textContent = '✓';
-  }
+  if (card) { card.classList.add('selected'); card.querySelector('.t-check').textContent = '✓'; }
   document.getElementById('inp-topid').value = id;
   const t = loadedTopics.find(x => x.topid === id);
   if (t) toast(`✓ Topic: ${t.name}`, 'success');
 }
 
-
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
 let state = {
-  posts: JSON.parse(localStorage.getItem('ixcPosts') || '[]'),
+  posts:     JSON.parse(localStorage.getItem('ixcPosts')     || '[]'),
   scheduled: JSON.parse(localStorage.getItem('ixcScheduled') || '[]'),
-  creds: JSON.parse(localStorage.getItem('ixcCreds') || '{}'),
-  defaults: JSON.parse(localStorage.getItem('ixcDefaults') || '{"lang":"Urdu","tone":"casual and friendly","fid":293}'),
+  creds:     JSON.parse(localStorage.getItem('ixcCreds')     || '{}'),
+  defaults:  JSON.parse(localStorage.getItem('ixcDefaults')  || '{"lang":"Urdu","tone":"casual and friendly","fid":293}'),
 };
 let currentGenerated = null;
 
 function save() {
-  localStorage.setItem('ixcPosts', JSON.stringify(state.posts));
+  localStorage.setItem('ixcPosts',     JSON.stringify(state.posts));
   localStorage.setItem('ixcScheduled', JSON.stringify(state.scheduled));
-  localStorage.setItem('ixcCreds', JSON.stringify(state.creds));
-  localStorage.setItem('ixcDefaults', JSON.stringify(state.defaults));
+  localStorage.setItem('ixcCreds',     JSON.stringify(state.creds));
+  localStorage.setItem('ixcDefaults',  JSON.stringify(state.defaults));
 }
 
 // ══════════════════════════════════════════
@@ -1135,7 +1331,7 @@ function nav(page) {
     if(b.getAttribute('onclick')?.includes("'"+page+"'")) b.classList.add('active');
   });
   if(page==='overview') refreshOverview();
-  if(page==='log') refreshLog();
+  if(page==='log')      refreshLog();
   if(page==='schedule') refreshSchedule();
   if(page==='settings') loadSettings();
 }
@@ -1156,15 +1352,15 @@ function toast(msg, type='info') {
 //  OVERVIEW
 // ══════════════════════════════════════════
 function refreshOverview() {
-  const pub = state.posts.filter(p=>p.status==='published');
-  const ai = state.posts.filter(p=>p.ai);
+  const pub  = state.posts.filter(p=>p.status==='published');
+  const ai   = state.posts.filter(p=>p.ai);
   const fail = state.posts.filter(p=>p.status==='failed');
   document.getElementById('stat-total').textContent = pub.length;
-  document.getElementById('stat-ai').textContent = ai.length;
+  document.getElementById('stat-ai').textContent    = ai.length;
   document.getElementById('stat-sched').textContent = state.scheduled.length;
-  document.getElementById('stat-fail').textContent = fail.length;
+  document.getElementById('stat-fail').textContent  = fail.length;
 
-  const tbody = document.getElementById('recent-tbody');
+  const tbody  = document.getElementById('recent-tbody');
   const recent = [...state.posts].reverse().slice(0,5);
   if(!recent.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No posts yet — compose your first post!</td></tr>';
@@ -1182,51 +1378,12 @@ function refreshOverview() {
 }
 
 // ══════════════════════════════════════════
-//  IMAGE PREVIEW
-// ══════════════════════════════════════════
-function previewImage() {
-  const url = document.getElementById('inp-image-url').value.trim();
-  const wrap = document.getElementById('img-preview-wrap');
-  const img  = document.getElementById('img-preview');
-  const err  = document.getElementById('img-error');
-  const stat = document.getElementById('img-status');
-
-  if(!url) { wrap.style.display='none'; err.style.display='none'; return; }
-
-  wrap.style.display = 'block';
-  err.style.display  = 'none';
-  stat.style.display = 'none';
-  img.src = url;
-
-  img.onload  = () => { stat.style.display='block'; err.style.display='none'; };
-  img.onerror = () => { err.style.display='block';  wrap.style.display='none'; };
-}
-
-function clearImage() {
-  document.getElementById('inp-image-url').value = '';
-  document.getElementById('img-preview-wrap').style.display = 'none';
-  document.getElementById('img-error').style.display = 'none';
-  // also clear thumb in result
-  document.getElementById('ai-img-thumb').style.display = 'none';
-}
-
-function previewManImage() {
-  const url  = document.getElementById('man-image-url').value.trim();
-  const wrap = document.getElementById('man-img-wrap');
-  const img  = document.getElementById('man-img-preview');
-  if(!url) { wrap.style.display='none'; return; }
-  img.src = url;
-  img.onload  = () => { wrap.style.display='block'; };
-  img.onerror = () => { wrap.style.display='none'; };
-}
-
-// ══════════════════════════════════════════
-//  PROXY BASE URL
+//  PROXY
 // ══════════════════════════════════════════
 const PROXY = 'http://localhost:3000';
 
 // ══════════════════════════════════════════
-//  GENERATE POST (via proxy server)
+//  GENERATE POST
 // ══════════════════════════════════════════
 async function generatePost() {
   const topic   = document.getElementById('inp-topic').value.trim();
@@ -1234,7 +1391,7 @@ async function generatePost() {
   const tone    = document.getElementById('inp-tone').value;
   const groqKey = document.getElementById('inp-groq').value.trim() || state.creds.groq || '';
 
-  if(!topic) { toast('Topic enter karo pehle!','warn'); return; }
+  if(!topic) { toast('Please enter a topic first!','warn'); return; }
 
   const btn = document.getElementById('btn-gen');
   btn.disabled = true;
@@ -1251,17 +1408,17 @@ async function generatePost() {
     if(!res.ok || data.error) throw new Error(data.error || 'Server error');
     if(!data.title || !data.content) throw new Error('AI ne galat format diya');
 
-    currentGenerated = { title: data.title, content: data.content, topic, lang, tone,
-      topid: parseInt(document.getElementById('inp-topid').value) || 0 };
+    currentGenerated = {
+      title: data.title, content: data.content,
+      topic, lang, tone,
+      topid: parseInt(document.getElementById('inp-topid').value) || 0
+    };
 
-    // show image thumb in result if URL provided
-    const imgUrl = document.getElementById('inp-image-url').value.trim();
-    if(imgUrl) {
-      currentGenerated.imageUrl = imgUrl;
-      document.getElementById('ai-img-preview').src = imgUrl;
+    // Show image thumb if file was selected
+    if (imageStore.ai) {
+      document.getElementById('ai-img-preview').src = imageStore.ai.base64;
       document.getElementById('ai-img-thumb').style.display = 'block';
     } else {
-      currentGenerated.imageUrl = '';
       document.getElementById('ai-img-thumb').style.display = 'none';
     }
 
@@ -1270,9 +1427,9 @@ async function generatePost() {
     document.getElementById('ai-result').classList.add('show');
     document.getElementById('btn-post').disabled = false;
 
-    toast('✦ Post AI ne generate kar di!', 'success');
+    toast('✦ Post generated by AI!', 'success');
   } catch(e) {
-    toast('Generation fail: ' + e.message + ' — Server chalu hai? (node server.js)', 'error');
+    toast('Generation failed: ' + e.message + ' — Is server running? (node server.js)', 'error');
   }
 
   btn.disabled = false;
@@ -1281,38 +1438,52 @@ async function generatePost() {
 
 function editPost() {
   if(!currentGenerated) return;
-  document.getElementById('man-title').value = currentGenerated.title;
+  document.getElementById('man-title').value   = currentGenerated.title;
   document.getElementById('man-content').value = currentGenerated.content;
-  toast('Post manual editor mein copy ho gayi', 'info');
+  toast('Post copied to manual editor', 'info');
 }
 
 function regeneratePost() { generatePost(); }
 
 // ══════════════════════════════════════════
-//  PUBLISH (via proxy server → Infinix Club)
+//  PUBLISH
 // ══════════════════════════════════════════
 async function publishPost() {
-  if(!currentGenerated) { toast('Pehle post generate karo!','warn'); return; }
+  if(!currentGenerated) { toast('Please generate a post first!','warn'); return; }
 
   const authToken = document.getElementById('inp-token').value.trim() || state.creds.token || '';
   const cookie    = state.creds.cookie || '';
   const fid       = document.getElementById('inp-fid').value;
 
-  if(!authToken) { toast('Auth Token settings mein save karo!','warn'); return; }
+  if(!authToken) { toast('Save Auth Token in Settings first!','warn'); return; }
+
+  // Debug: token check
+  console.log('Token being used (first 40):', authToken.substring(0, 40));
+  console.log('Cookie present:', !!cookie, cookie.substring(0, 30));
+  toast(`🔑 Token: ${authToken.substring(0,20)}...`, 'info');
 
   const btn = document.getElementById('btn-post');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Publishing...';
 
   try {
+    // Upload image first if selected → get aid for covers[]
+    let imageAid = '';
+    let imageCdnUrl = '';
+    if (imageStore.ai) {
+      btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Uploading Image...';
+      const imgResult = await uploadImageToInfinix('ai');
+      if (imgResult) { imageAid = imgResult.aid; imageCdnUrl = imgResult.url; }
+    }
+
     const res = await fetch(`${PROXY}/api/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: currentGenerated.title,
-        content: currentGenerated.content,
-        imageUrl: currentGenerated.imageUrl || '',
-        topid: currentGenerated.topid || 0,
+        title:     currentGenerated.title,
+        content:   currentGenerated.content,
+        imageAid,
+        topid:     currentGenerated.topid || 0,
         fid, authToken, cookie
       })
     });
@@ -1324,32 +1495,31 @@ async function publishPost() {
       throw new Error((data.error || 'Publish failed') + code + raw);
     }
 
-    const post = {
+    state.posts.push({
       id: Date.now(),
-      title: currentGenerated.title,
-      content: currentGenerated.content,
-      topic: currentGenerated.topic,
-      lang: currentGenerated.lang,
-      tone: currentGenerated.tone,
-      imageUrl: currentGenerated.imageUrl || '',
+      title:    currentGenerated.title,
+      content:  currentGenerated.content,
+      topic:    currentGenerated.topic,
+      lang:     currentGenerated.lang,
+      tone:     currentGenerated.tone,
+      imageUrl: imageCdnUrl,
       fid,
-      status: 'published',
-      ai: true,
-      tid: data.tid,
-      url: data.url,
-      time: Date.now()
-    };
+      status:   'published',
+      ai:       true,
+      tid:      data.tid,
+      url:      data.url,
+      time:     Date.now()
+    });
+    save();
 
-    state.posts.push(post); save();
     toast(`✓ Post published! Thread #${data.tid}`, 'success');
     currentGenerated = null;
+    clearFileUpload('ai');
     document.getElementById('ai-result').classList.remove('show');
-    clearImage();
     refreshOverview();
 
   } catch(e) {
-    toast('Publish fail: ' + e.message, 'error');
-    // Save as failed
+    toast('Publish failed: ' + e.message, 'error');
     state.posts.push({
       id: Date.now(), title: currentGenerated.title,
       topic: currentGenerated.topic, status: 'failed',
@@ -1363,45 +1533,51 @@ async function publishPost() {
 }
 
 async function manualPublish() {
-  const title    = document.getElementById('man-title').value.trim();
-  const content  = document.getElementById('man-content').value.trim();
-  const imageUrl = document.getElementById('man-image-url').value.trim();
+  const title     = document.getElementById('man-title').value.trim();
+  const content   = document.getElementById('man-content').value.trim();
   const authToken = state.creds.token || '';
   const cookie    = state.creds.cookie || '';
 
-  if(!title || !content) { toast('Title aur content dono bharo!','warn'); return; }
-  if(!authToken) { toast('Auth Token Settings mein save karo pehle!','warn'); return; }
+  if(!title || !content) { toast('Please fill in both title and content!','warn'); return; }
+  if(!authToken) { toast('Please save Auth Token in Settings first!','warn'); return; }
 
   try {
+    let imageAid = '';
+    let imageCdnUrl = '';
+    if (imageStore.man) {
+      toast('⏳ Uploading image to Infinix CDN...', 'info');
+      const imgResult = await uploadImageToInfinix('man');
+      if (imgResult) { imageAid = imgResult.aid; imageCdnUrl = imgResult.url; }
+    }
+
     const res = await fetch(`${PROXY}/api/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, imageUrl, fid: 293, authToken, cookie })
+      body: JSON.stringify({ title, content, imageAid, fid: 293, authToken, cookie })
     });
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Publish failed');
 
     state.posts.push({
       id: Date.now(), title, content,
-      imageUrl, topic: '—', lang: '—', tone: '—',
+      imageUrl: imageCdnUrl, topic: '—', lang: '—', tone: '—',
       fid: 293, status: 'published', ai: false,
       tid: data.tid, url: data.url, time: Date.now()
     });
     save();
     toast(`✓ Manual post published! Thread #${data.tid}`, 'success');
-    document.getElementById('man-title').value = '';
+    document.getElementById('man-title').value   = '';
     document.getElementById('man-content').value = '';
-    document.getElementById('man-image-url').value = '';
-    document.getElementById('man-img-wrap').style.display = 'none';
+    clearFileUpload('man');
     refreshOverview();
   } catch(e) {
-    toast('Manual publish fail: ' + e.message, 'error');
+    toast('Manual publish failed: ' + e.message, 'error');
   }
 }
 
 function schedulePost() {
-  if(!currentGenerated) { toast('Pehle post generate karo!','warn'); return; }
-  const when = prompt('Schedule time enter karo (e.g. 2026-03-30 18:00):');
+  if(!currentGenerated) { toast('Please generate a post first!','warn'); return; }
+  const when = prompt('Enter schedule time (e.g. 2026-03-30 18:00):');
   if(!when) return;
   state.scheduled.push({ ...currentGenerated, id: Date.now(), scheduledFor: when });
   save();
@@ -1454,18 +1630,18 @@ function exportLog() {
 }
 
 function clearLog() {
-  if(!confirm('Saara log delete karna hai?')) return;
+  if(!confirm('Delete all log data?')) return;
   state.posts = []; save(); refreshLog(); refreshOverview();
   toast('Log cleared', 'warn');
 }
 
 // ══════════════════════════════════════════
-//  SCHEDULE CALENDAR
+//  SCHEDULE
 // ══════════════════════════════════════════
 function refreshSchedule() {
-  const grid = document.getElementById('cal-grid');
+  const grid  = document.getElementById('cal-grid');
   const today = new Date();
-  const dow = today.getDay(); // 0=Sun
+  const dow   = today.getDay();
   const monday = new Date(today);
   monday.setDate(today.getDate() - ((dow + 6) % 7));
 
@@ -1473,8 +1649,8 @@ function refreshSchedule() {
   for(let i=0;i<7;i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate()+i);
-    const isToday = d.toDateString()===today.toDateString();
-    const dateStr = d.toISOString().slice(0,10);
+    const isToday  = d.toDateString()===today.toDateString();
+    const dateStr  = d.toISOString().slice(0,10);
     const dayPosts = state.scheduled.filter(p=>p.scheduledFor?.startsWith(dateStr));
 
     const cell = document.createElement('div');
@@ -1484,7 +1660,6 @@ function refreshSchedule() {
     grid.appendChild(cell);
   }
 
-  // Upcoming table
   const tbody = document.getElementById('sched-tbody');
   if(!state.scheduled.length) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">No scheduled posts</td></tr>';
@@ -1495,9 +1670,7 @@ function refreshSchedule() {
       <td>${p.title}</td>
       <td style="color:var(--muted);font-size:11px">${p.topic||'—'}</td>
       <td style="color:var(--warning)">${p.scheduledFor}</td>
-      <td>
-        <button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deleteSched(${p.id})">Remove</button>
-      </td>
+      <td><button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deleteSched(${p.id})">Remove</button></td>
     </tr>
   `).join('');
 }
@@ -1511,30 +1684,29 @@ function deleteSched(id) {
 //  SETTINGS
 // ══════════════════════════════════════════
 function loadSettings() {
-  if(state.creds.groq) document.getElementById('set-groq').value = state.creds.groq;
-  if(state.creds.token) document.getElementById('set-token').value = state.creds.token;
+  if(state.creds.groq)   document.getElementById('set-groq').value   = state.creds.groq;
+  if(state.creds.token)  document.getElementById('set-token').value  = state.creds.token;
   if(state.creds.cookie) document.getElementById('set-cookie').value = state.creds.cookie;
   document.getElementById('set-lang').value = state.defaults.lang||'Urdu';
   document.getElementById('set-tone').value = state.defaults.tone||'casual and friendly';
-  document.getElementById('set-fid').value = state.defaults.fid||293;
+  document.getElementById('set-fid').value  = state.defaults.fid||293;
 }
 
 function saveCredentials() {
-  state.creds.groq = document.getElementById('set-groq').value;
-  state.creds.token = document.getElementById('set-token').value;
+  state.creds.groq   = document.getElementById('set-groq').value;
+  state.creds.token  = document.getElementById('set-token').value;
   state.creds.cookie = document.getElementById('set-cookie').value;
   save(); toast('Credentials saved ✓','success');
-  if(state.creds.groq) document.getElementById('inp-groq').value = state.creds.groq;
+  if(state.creds.groq)  document.getElementById('inp-groq').value  = state.creds.groq;
   if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
 }
 
 async function debugCredentials() {
-  const token  = document.getElementById('set-token').value.trim() || state.creds.token || '';
+  const token  = document.getElementById('set-token').value.trim()  || state.creds.token  || '';
   const cookie = document.getElementById('set-cookie').value.trim() || state.creds.cookie || '';
   const box    = document.getElementById('debug-result');
 
-  if(!token) { toast('Token pehle save karo!','warn'); return; }
-
+  if(!token) { toast('Please save token first!','warn'); return; }
   box.style.display = 'block';
   box.textContent   = '⏳ Testing credentials...';
 
@@ -1550,29 +1722,68 @@ async function debugCredentials() {
     toast(data.httpStatus === 200 ? '✓ Credentials valid!' : '✗ Credentials issue — check below', data.httpStatus === 200 ? 'success' : 'error');
   } catch(e) {
     box.style.color = 'var(--danger)';
-    box.textContent = '✗ ' + e.message + '\n\nServer chalu hai? node server.js';
-    toast('Debug fail: ' + e.message, 'error');
+    box.textContent = '✗ ' + e.message + '\n\nIs server running? node server.js';
+    toast('Debug failed: ' + e.message, 'error');
+  }
+}
+
+// Test publish with a dummy post to see exact Infinix response
+async function debugPublish() {
+  const token  = document.getElementById('set-token').value.trim()  || state.creds.token  || '';
+  const cookie = document.getElementById('set-cookie').value.trim() || state.creds.cookie || '';
+  const box    = document.getElementById('debug-result');
+
+  if(!token) { toast('Please save token first!','warn'); return; }
+
+  box.style.display = 'block';
+  box.style.color   = 'var(--muted)';
+  box.textContent   = '⏳ Sending test publish...\n\nToken: ' + token.substring(0,40) + '...\nCookie: ' + (cookie ? cookie.substring(0,50)+'...' : '(EMPTY — this is the problem!)');
+
+  try {
+    const res = await fetch(`${PROXY}/api/publish`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        title:     'Test Post — Delete Karo',
+        content:   'This is a test post.',
+        imageAid:  '',
+        topid:     6675163,
+        fid:       293,
+        authToken: token,
+        cookie:    cookie
+      })
+    });
+    const data = await res.json();
+    const ok   = data.tid || data.success;
+    box.style.color = ok ? 'var(--success)' : 'var(--danger)';
+    box.textContent = (ok ? '✓ SUCCESS!\n' : '✗ FAILED\n') +
+      'Token used: ' + token.substring(0,40) + '...\n' +
+      'Cookie: ' + (cookie ? 'YES (' + cookie.length + ' chars)' : 'NO — Cookie is empty, this is causing the 401 error!') +
+      '\n\nServer response:\n' + JSON.stringify(data, null, 2);
+    toast(ok ? '✓ Test publish succeeded!' : '✗ Publish failed — check debug box', ok ? 'success' : 'error');
+  } catch(e) {
+    box.style.color = 'var(--danger)';
+    box.textContent = '✗ Server error: ' + e.message + '\n\nIs server running? node server.js';
+    toast('Debug failed: ' + e.message, 'error');
   }
 }
 
 function saveDefaults() {
   state.defaults.lang = document.getElementById('set-lang').value;
   state.defaults.tone = document.getElementById('set-tone').value;
-  state.defaults.fid = parseInt(document.getElementById('set-fid').value);
+  state.defaults.fid  = parseInt(document.getElementById('set-fid').value);
   save(); toast('Defaults saved ✓','success');
 }
 
-function toggleIt(id) {
-  document.getElementById(id).classList.toggle('on');
-}
+function toggleIt(id) { document.getElementById(id).classList.toggle('on'); }
 
 // ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
 function timeAgo(ts) {
   const diff = Date.now() - ts;
-  if(diff < 60000) return 'just now';
-  if(diff < 3600000) return Math.floor(diff/60000)+'m ago';
+  if(diff < 60000)    return 'just now';
+  if(diff < 3600000)  return Math.floor(diff/60000)+'m ago';
   if(diff < 86400000) return Math.floor(diff/3600000)+'h ago';
   return Math.floor(diff/86400000)+'d ago';
 }
@@ -1582,12 +1793,11 @@ function timeAgo(ts) {
 // ══════════════════════════════════════════
 (function init() {
   renderTopics();
-  if(state.creds.groq) document.getElementById('inp-groq').value = state.creds.groq;
+  if(state.creds.groq)  document.getElementById('inp-groq').value  = state.creds.groq;
   if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
-  // Set defaults
   document.getElementById('inp-lang').value = state.defaults.lang||'Urdu';
   document.getElementById('inp-tone').value = state.defaults.tone||'casual and friendly';
-  document.getElementById('inp-fid').value = state.defaults.fid||293;
+  document.getElementById('inp-fid').value  = state.defaults.fid||293;
   refreshOverview();
 })();
 </script>
