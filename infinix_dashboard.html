@@ -649,6 +649,8 @@
   <button class="side-btn" onclick="nav('compose')"><span class="icon">✦</span> Compose Post <span class="badge">AI</span></button>
   <button class="side-btn" onclick="nav('schedule')"><span class="icon">◷</span> Schedule</button>
   <button class="side-btn" onclick="nav('log')"><span class="icon">≡</span> Post Log</button>
+  <button class="side-btn" onclick="nav('lookup')"><span class="icon">🔍</span> User Lookup</button>
+  <button class="side-btn" onclick="nav('bulk')"><span class="icon">⚡</span> Bulk Poster <span class="badge">50</span></button>
   <div class="side-label" style="margin-top:12px">Config</div>
   <button class="side-btn" onclick="nav('settings')"><span class="icon">⊙</span> Settings</button>
 </aside>
@@ -700,7 +702,7 @@
     <div class="card-body" style="padding:0">
       <table class="log-table" id="recent-table">
         <thead><tr>
-          <th>Title</th><th>Topic</th><th>Status</th><th>Thread</th><th>Time</th>
+          <th>Title</th><th>Topic</th><th>Status</th><th>Thread</th><th>Time</th><th>⭐</th>
         </tr></thead>
         <tbody id="recent-tbody">
           <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No posts yet — compose your first post!</td></tr>
@@ -965,6 +967,210 @@
   </div>
 </div>
 
+<!-- ═══ USER LOOKUP ═══ -->
+<div class="page" id="page-lookup">
+  <div class="page-header">
+    <div>
+      <div class="page-title">User <span>Lookup</span></div>
+      <div class="page-sub">Search any Infinix Club user by UUID / UID</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>🔍 Search User</h3></div>
+    <div class="card-body">
+      <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:20px">
+        <div class="form-group" style="flex:1">
+          <label>UUID / User ID</label>
+          <input type="text" id="lookup-uuid" placeholder="e.g. 7179083" onkeydown="if(event.key==='Enter')lookupUser()">
+        </div>
+        <button class="btn btn-primary" onclick="lookupUser()" id="btn-lookup">🔍 Search</button>
+        <button class="btn btn-secondary" onclick="lookupSelf()">👤 My Profile</button>
+      </div>
+
+      <!-- Profile Card -->
+      <div id="lookup-result" style="display:none">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px">
+          <!-- Avatar -->
+          <div style="text-align:center">
+            <img id="lu-avatar" src="" alt="Avatar"
+              style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);display:block;margin-bottom:8px"
+              onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22><rect width=%2280%22 height=%2280%22 fill=%22%2318181f%22/><text x=%2240%22 y=%2248%22 text-anchor=%22middle%22 font-size=%2232%22>👤</text></svg>'">
+            <div id="lu-grouptitle" style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,229,255,0.15);color:var(--accent);display:inline-block;margin-top:4px"></div>
+          </div>
+
+          <!-- Info -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Username</div>
+              <div id="lu-username" style="font-size:15px;font-weight:700;color:var(--text);font-family:'Syne',sans-serif">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">UID</div>
+              <div id="lu-uid" style="font-size:13px;color:var(--accent)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Real Name</div>
+              <div id="lu-realname" style="font-size:13px;color:var(--text)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Email</div>
+              <div id="lu-email" style="font-size:13px;color:var(--text);word-break:break-all">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Nationality</div>
+              <div id="lu-nationality" style="font-size:13px;color:var(--text)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Group / Rank</div>
+              <div id="lu-group" style="font-size:13px;color:var(--text)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Posts</div>
+              <div id="lu-posts" style="font-size:13px;color:var(--text)">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Joined</div>
+              <div id="lu-joined" style="font-size:13px;color:var(--text)">—</div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Profile URL</div>
+              <a id="lu-url" href="#" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none">—</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medals, Tags, Bio -->
+        <div id="lu-extra"></div>
+
+        <!-- Raw JSON toggle -->
+        <div style="margin-top:12px">
+          <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="toggleRaw()">{ } Raw JSON</button>
+          <pre id="lu-raw" style="display:none;margin-top:8px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);overflow-x:auto;white-space:pre-wrap;word-break:break-all"></pre>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="lookup-error" style="display:none;padding:16px;background:rgba(255,59,107,0.08);border:1px solid rgba(255,59,107,0.2);border-radius:8px;font-size:12px;color:var(--danger)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BULK POSTER ═══ -->
+<div class="page" id="page-bulk">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Bulk <span>Poster</span></div>
+      <div class="page-sub">Add up to 50 topics — AI generates & auto publishes each one</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>📋 Topics List</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="loadSampleTopics()">📝 Load Sample Topics</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="clearBulkTopics()">✕ Clear</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Enter one topic per line — max 50 topics</div>
+      <textarea id="bulk-topics" style="min-height:200px;font-size:12px;line-height:1.8" placeholder="Beyond: Two Souls PS4 Review&#10;Infamous Second Son Gameplay&#10;God of War Best Moments&#10;PUBG Mobile Tips and Tricks&#10;..."></textarea>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)" id="bulk-topic-count">0 topics</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>⚙ Bulk Settings</h3></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="form-group">
+          <label>Language</label>
+          <select id="bulk-lang">
+            <option value="English">English</option>
+            <option value="Urdu">Urdu</option>
+            <option value="Roman Urdu">Roman Urdu</option>
+            <option value="Hinglish">Hinglish</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tone</label>
+          <select id="bulk-tone">
+            <option value="casual and friendly">Casual & Friendly</option>
+            <option value="excited and hype">Excited / Hype</option>
+            <option value="professional">Professional</option>
+            <option value="informative">Informative</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Topic (Thread Tag)</label>
+          <select id="bulk-topid">
+            <option value="6675164">PlayStation Universe</option>
+            <option value="6675163">Daily Thread</option>
+            <option value="6674907">V4 GAMES</option>
+            <option value="0">No Topic</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Delay Between Posts</label>
+          <select id="bulk-delay">
+            <option value="3000">3 seconds</option>
+            <option value="5000">5 seconds</option>
+            <option value="10000">10 seconds</option>
+            <option value="30000">30 seconds</option>
+            <option value="60000">1 minute</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-bulk-start" onclick="startBulkPost()">⚡ Start Bulk Posting</button>
+        <button class="btn btn-danger" id="btn-bulk-stop" onclick="stopBulkPost()" disabled>⏹ Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card" id="bulk-progress-card" style="display:none">
+    <div class="card-header">
+      <h3>📊 Progress</h3>
+      <div id="bulk-progress-text" style="font-size:12px;color:var(--muted)">0 / 0</div>
+    </div>
+    <div class="card-body">
+      <!-- Progress bar -->
+      <div style="background:var(--surface2);border-radius:4px;height:6px;margin-bottom:20px;overflow:hidden">
+        <div id="bulk-progress-bar" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;border-radius:4px"></div>
+      </div>
+
+      <!-- Current post being processed -->
+      <div id="bulk-current" style="display:none;padding:12px;background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:8px;margin-bottom:16px">
+        <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⏳ Currently Processing</div>
+        <div id="bulk-current-topic" style="font-size:13px;font-weight:600;color:var(--text)">—</div>
+        <div id="bulk-current-status" style="font-size:11px;color:var(--muted);margin-top:4px">—</div>
+      </div>
+
+      <!-- Results log -->
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Results Log</div>
+      <div id="bulk-log" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;font-size:12px;font-family:'DM Mono',monospace;line-height:1.8"></div>
+
+      <!-- Summary -->
+      <div id="bulk-summary" style="display:none;margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="text-align:center;padding:16px;background:rgba(0,214,143,0.08);border:1px solid rgba(0,214,143,0.2);border-radius:8px">
+          <div id="bulk-success-count" style="font-size:28px;font-weight:800;color:var(--success);font-family:'Syne',sans-serif">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Published</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:rgba(255,59,107,0.08);border:1px solid rgba(255,59,107,0.2);border-radius:8px">
+          <div id="bulk-fail-count" style="font-size:28px;font-weight:800;color:var(--danger);font-family:'Syne',sans-serif">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Failed</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:8px">
+          <div id="bulk-skip-count" style="font-size:28px;font-weight:800;color:var(--accent);font-family:'Syne',sans-serif">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Skipped</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SETTINGS ═══ -->
 <div class="page" id="page-settings">
   <div class="page-header">
@@ -1051,6 +1257,37 @@
         <div style="margin-top:12px">
           <button class="btn btn-danger" style="width:100%" onclick="clearLog()">🗑 Clear All Log Data</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ── FOR YOU BOOST CARD ── -->
+    <div class="settings-card" style="grid-column:1/-1">
+      <h3>🚀 Boost Post to "For You" / Recommend</h3>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Push your post into the <strong style="color:var(--accent)">For You / Recommend</strong> section using the
+        <code style="background:var(--bg);padding:2px 6px;border-radius:4px;color:var(--accent)">/v5/extend/forYouRecommon</code> API endpoint.
+        Enter Thread ID (tid) of your published post — found in Post Log.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+        <div class="form-group">
+          <label>Thread ID (tid)</label>
+          <input type="number" id="boost-tid" placeholder="e.g. 12345678" style="font-size:13px">
+        </div>
+        <div class="form-group">
+          <label>Forum FID</label>
+          <input type="number" id="boost-fid" value="293" style="font-size:13px">
+        </div>
+        <button class="btn btn-primary" onclick="boostToForYou()" id="btn-boost" style="height:40px;white-space:nowrap">
+          🚀 Boost Now
+        </button>
+      </div>
+      <div id="boost-result" style="display:none;margin-top:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;white-space:pre-wrap;word-break:break-all"></div>
+
+      <!-- Bulk boost from log -->
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Or boost all published posts from log at once:</div>
+        <button class="btn btn-secondary" onclick="bulkBoost()" id="btn-bulk-boost">⚡ Bulk Boost All Published Posts</button>
+        <div id="bulk-boost-result" style="display:none;margin-top:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);white-space:pre-wrap"></div>
       </div>
     </div>
   </div>
@@ -1334,6 +1571,8 @@ function nav(page) {
   if(page==='log')      refreshLog();
   if(page==='schedule') refreshSchedule();
   if(page==='settings') loadSettings();
+  if(page==='lookup')   { document.getElementById('lookup-result').style.display='none'; document.getElementById('lookup-error').style.display='none'; }
+  if(page==='bulk')     { updateBulkCount(); }
 }
 
 // ══════════════════════════════════════════
@@ -1371,8 +1610,9 @@ function refreshOverview() {
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
       <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
-      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/forum/293${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
       <td style="color:var(--muted);font-size:11px">${timeAgo(p.time)}</td>
+      <td>${p.tid ? `<button class="btn" style="padding:3px 8px;font-size:10px;background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3)" onclick="recommendPost(${p.tid},${p.fid||293})">⭐</button>` : ''}</td>
     </tr>
   `).join('');
 }
@@ -1606,14 +1846,43 @@ function refreshLog() {
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
       <td style="font-size:11px">${p.lang||'—'}</td>
       <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
-      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/forum/293${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
       <td style="color:var(--muted);font-size:11px">${new Date(p.time).toLocaleString()}</td>
-      <td><button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deletePost(${p.id})">Delete</button></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        ${p.tid ? `<button class="btn" style="padding:4px 8px;font-size:10px;background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3)" onclick="recommendPost(${p.tid},${p.fid||293})">⭐ Recommend</button>` : ''}
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:10px" onclick="deletePost(${p.id})">Delete</button>
+      </td>
     </tr>
   `).join('');
 }
 
 function filterLog() { refreshLog(); }
+
+async function recommendPost(tid, fid) {
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  toast('⭐ Adding to Recommend...', 'info');
+
+  try {
+    const res = await fetch(`${PROXY}/api/recommend`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ authToken, cookie, fid: fid || 293, tid })
+    });
+    const data = await res.json();
+    console.log('Recommend response:', data);
+
+    if (data.success || data.raw?.status === 1) {
+      toast('✓ Post added to Recommend section!', 'success');
+    } else {
+      toast('Response: ' + JSON.stringify(data.raw || data), 'warn');
+    }
+  } catch(e) {
+    toast('Recommend failed: ' + e.message, 'error');
+  }
+}
 
 function deletePost(id) {
   state.posts = state.posts.filter(p=>p.id!==id);
@@ -1773,6 +2042,473 @@ function saveDefaults() {
   state.defaults.tone = document.getElementById('set-tone').value;
   state.defaults.fid  = parseInt(document.getElementById('set-fid').value);
   save(); toast('Defaults saved ✓','success');
+}
+
+// ══════════════════════════════════════════
+//  BULK POSTER
+// ══════════════════════════════════════════
+let bulkRunning = false;
+let bulkStop    = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('bulk-topics');
+  if (ta) ta.addEventListener('input', updateBulkCount);
+});
+
+function updateBulkCount() {
+  const topics = getBulkTopics();
+  document.getElementById('bulk-topic-count').textContent = `${topics.length} topic${topics.length !== 1 ? 's' : ''}`;
+}
+
+function getBulkTopics() {
+  const raw = document.getElementById('bulk-topics').value;
+  return raw.split('\n').map(t => t.trim()).filter(t => t.length > 0).slice(0, 50);
+}
+
+function clearBulkTopics() {
+  document.getElementById('bulk-topics').value = '';
+  updateBulkCount();
+}
+
+function loadSampleTopics() {
+  document.getElementById('bulk-topics').value = `Beyond: Two Souls — Is It Worth Playing in 2026?
+Infamous Second Son: Best Superpowers Ranked
+God of War Ragnarok — Most Epic Boss Fights
+PUBG Mobile Top 5 Tips for Beginners
+Infinix HOT 40 Pro Gaming Review
+PlayStation 5 vs Xbox Series X — Which One?
+Call of Duty Mobile Best Loadout 2026
+Free Fire vs PUBG Mobile — Which is Better?
+Genshin Impact New Characters Guide
+Minecraft Survival Tips for New Players
+GTA 6 Release Date — What We Know
+Elden Ring Best Starting Class for Beginners
+Spider-Man 2 PS5 Review
+Fortnite Chapter 5 Best Landing Spots
+Valorant Tips for Rank Climbing
+Mobile Legends Best Heroes 2026
+Among Us New Update Features
+Cyberpunk 2077 — Is It Fixed Now?
+Red Dead Redemption 2 Hidden Secrets
+The Last of Us Part 2 Story Explained`.trim();
+  updateBulkCount();
+}
+
+function bulkLog(msg, type = 'info') {
+  const log = document.getElementById('bulk-log');
+  if (!log) return;
+  const color = type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : type === 'warn' ? 'var(--warning)' : 'var(--muted)';
+  const icon  = type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warn' ? '⚠' : '•';
+  const line  = document.createElement('div');
+  line.style.color = color;
+  line.textContent = `${icon} ${msg}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function startBulkPost() {
+  const topics    = getBulkTopics();
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const lang      = document.getElementById('bulk-lang').value;
+  const tone      = document.getElementById('bulk-tone').value;
+  const topid     = document.getElementById('bulk-topid').value;
+  const delay     = parseInt(document.getElementById('bulk-delay').value);
+  const groqKey   = state.creds.groq || '';
+
+  if (!topics.length) { toast('Add at least one topic!', 'warn'); return; }
+  if (!authToken)     { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  // Reset UI
+  bulkStop    = false;
+  bulkRunning = true;
+  document.getElementById('btn-bulk-start').disabled = true;
+  document.getElementById('btn-bulk-stop').disabled  = false;
+  document.getElementById('bulk-progress-card').style.display = 'block';
+  document.getElementById('bulk-log').innerHTML = '';
+  document.getElementById('bulk-summary').style.display = 'none';
+  document.getElementById('bulk-current').style.display = 'block';
+
+  let success = 0, failed = 0, skipped = 0;
+  const total = topics.length;
+
+  bulkLog(`Starting bulk post — ${total} topics`, 'info');
+
+  for (let i = 0; i < total; i++) {
+    if (bulkStop) {
+      bulkLog('Stopped by user', 'warn');
+      break;
+    }
+
+    const topic = topics[i];
+
+    // Update progress
+    const pct = Math.round(((i) / total) * 100);
+    document.getElementById('bulk-progress-bar').style.width  = pct + '%';
+    document.getElementById('bulk-progress-text').textContent = `${i} / ${total}`;
+    document.getElementById('bulk-current-topic').textContent = topic;
+    document.getElementById('bulk-current-status').textContent = '⏳ Generating with AI...';
+
+    try {
+      // Step 1: Generate
+      bulkLog(`[${i+1}/${total}] Generating: "${topic.slice(0,40)}..."`, 'info');
+
+      const genRes = await fetch(`${PROXY}/api/generate`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ topic, tone, language: lang, groqKey })
+      });
+      const genData = await genRes.json();
+      if (!genRes.ok || genData.error) throw new Error('Generate failed: ' + (genData.error || 'Unknown'));
+      if (!genData.title || !genData.content) throw new Error('AI returned invalid format');
+
+      document.getElementById('bulk-current-status').textContent = '🚀 Publishing...';
+      bulkLog(`  → Title: "${genData.title.slice(0,50)}"`, 'info');
+
+      // Step 2: Publish
+      const pubRes = await fetch(`${PROXY}/api/publish`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          title:     genData.title,
+          content:   genData.content,
+          imageAid:  '',
+          topid:     parseInt(topid),
+          fid:       293,
+          authToken,
+          cookie
+        })
+      });
+      const pubData = await pubRes.json();
+      if (!pubRes.ok || pubData.error) throw new Error('Publish failed: ' + (pubData.error || 'Unknown'));
+
+      success++;
+      bulkLog(`  ✓ Published! Thread #${pubData.tid}`, 'success');
+      document.getElementById('bulk-current-status').textContent = `✓ Published! Thread #${pubData.tid}`;
+
+      // Save to log
+      state.posts.push({
+        id: Date.now() + i,
+        title:   genData.title,
+        content: genData.content,
+        topic,
+        lang,
+        tone,
+        fid:    293,
+        status: 'published',
+        ai:     true,
+        tid:    pubData.tid,
+        url:    pubData.url,
+        time:   Date.now()
+      });
+      save();
+
+    } catch(e) {
+      failed++;
+      bulkLog(`  ✗ Error: ${e.message}`, 'error');
+      document.getElementById('bulk-current-status').textContent = '✗ Failed — ' + e.message;
+    }
+
+    // Update summary counts live
+    document.getElementById('bulk-success-count').textContent = success;
+    document.getElementById('bulk-fail-count').textContent    = failed;
+    document.getElementById('bulk-skip-count').textContent    = skipped;
+    document.getElementById('bulk-summary').style.display     = 'grid';
+
+    // Delay before next post (skip delay on last)
+    if (i < total - 1 && !bulkStop) {
+      document.getElementById('bulk-current-status').textContent = `⏳ Waiting ${delay/1000}s before next post...`;
+      bulkLog(`  ⏳ Waiting ${delay/1000} seconds...`, 'info');
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  // Final update
+  document.getElementById('bulk-progress-bar').style.width  = '100%';
+  document.getElementById('bulk-progress-text').textContent = `${total} / ${total}`;
+  document.getElementById('bulk-current').style.display     = 'none';
+  bulkLog(`\nDone! ✓ ${success} published, ✗ ${failed} failed, ⏭ ${skipped} skipped`, success > 0 ? 'success' : 'error');
+  toast(`Bulk done! ${success} published, ${failed} failed`, success > 0 ? 'success' : 'error');
+
+   // Play ringing notification sound
+  playDoneSound();
+ 
+  bulkRunning = false;
+  document.getElementById('btn-bulk-start').disabled = false;
+  document.getElementById('btn-bulk-stop').disabled  = true;
+  refreshOverview();
+  playDoneSound();
+}
+ 
+function stopBulkPost() {
+  bulkStop = true;
+  toast('Stopping after current post...', 'warn');
+  document.getElementById('btn-bulk-stop').disabled = true;
+}
+ 
+function playDoneSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+ 
+    // Ringing tone — 3 beeps
+    const beeps = [
+      { freq: 880, start: 0.0,  dur: 0.15 },
+      { freq: 880, start: 0.2,  dur: 0.15 },
+      { freq: 880, start: 0.4,  dur: 0.15 },
+      { freq: 1100, start: 0.65, dur: 0.3  },
+      { freq: 880,  start: 1.05, dur: 0.15 },
+      { freq: 880,  start: 1.25, dur: 0.15 },
+      { freq: 1100, start: 1.5,  dur: 0.4  },
+    ];
+ 
+    beeps.forEach(b => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(b.freq, ctx.currentTime + b.start);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + b.start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + b.start + b.dur);
+      osc.start(ctx.currentTime + b.start);
+      osc.stop(ctx.currentTime  + b.start + b.dur + 0.05);
+    });
+ 
+    // Auto close context after sound
+    setTimeout(() => ctx.close(), 3000);
+  } catch(e) {
+    console.warn('Sound error:', e.message);
+  }
+}
+ 
+function playDoneSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+ 
+    // Ringing tone — 3 rings
+    const rings = [0, 0.6, 1.2];
+    rings.forEach(startTime => {
+      // Each ring = two beeps
+      [0, 0.18].forEach(offset => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+ 
+        osc.type      = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime + startTime + offset);
+        osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + startTime + offset + 0.12);
+ 
+        gain.gain.setValueAtTime(0, ctx.currentTime + startTime + offset);
+        gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + startTime + offset + 0.01);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + startTime + offset + 0.14);
+ 
+        osc.start(ctx.currentTime + startTime + offset);
+        osc.stop(ctx.currentTime + startTime + offset + 0.15);
+      });
+    });
+ 
+    // Final long success tone
+    const finalOsc  = ctx.createOscillator();
+    const finalGain = ctx.createGain();
+    finalOsc.connect(finalGain);
+    finalGain.connect(ctx.destination);
+    finalOsc.type = 'sine';
+    finalOsc.frequency.setValueAtTime(880, ctx.currentTime + 1.8);
+    finalOsc.frequency.linearRampToValueAtTime(1100, ctx.currentTime + 2.1);
+    finalGain.gain.setValueAtTime(0.3, ctx.currentTime + 1.8);
+    finalGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.4);
+    finalOsc.start(ctx.currentTime + 1.8);
+    finalOsc.stop(ctx.currentTime + 2.5);
+ 
+  } catch(e) {
+    console.log('Audio not supported:', e.message);
+  }
+}
+ 
+
+// ══════════════════════════════════════════
+//  BOOST TO FOR YOU / RECOMMEND
+// ══════════════════════════════════════════
+async function boostToForYou() {
+  const tid       = document.getElementById('boost-tid').value.trim();
+  const fid       = document.getElementById('boost-fid').value || '293';
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const box       = document.getElementById('boost-result');
+  const btn       = document.getElementById('btn-boost');
+
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Boosting...';
+  box.style.display = 'block';
+  box.style.color   = 'var(--muted)';
+  box.textContent   = '⏳ Sending boost request...';
+
+  try {
+    const res  = await fetch(`${PROXY}/api/recommend`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ authToken, cookie, fid, tid: tid || undefined })
+    });
+    const data = await res.json();
+    const ok   = data.success || data.raw?.status === 1;
+    box.style.color   = ok ? 'var(--success)' : 'var(--danger)';
+    box.textContent   = (ok ? '✓ Boost sent!\n' : '✗ Boost failed\n') + JSON.stringify(data.raw || data, null, 2);
+    toast(ok ? '✓ Post boosted to For You!' : '✗ Boost failed — check result', ok ? 'success' : 'error');
+  } catch(e) {
+    box.style.color = 'var(--danger)';
+    box.textContent = '✗ Error: ' + e.message;
+    toast('Boost error: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Boost Now';
+}
+
+async function bulkBoost() {
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const fid       = '293';
+  const box       = document.getElementById('bulk-boost-result');
+  const btn       = document.getElementById('btn-bulk-boost');
+
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  const published = state.posts.filter(p => p.status === 'published' && p.tid);
+  if (!published.length) { toast('No published posts with Thread ID found!', 'warn'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Boosting...';
+  box.style.display = 'block';
+  box.textContent   = `⏳ Boosting ${published.length} posts...\n`;
+
+  let success = 0, failed = 0;
+  for (const post of published) {
+    try {
+      const res  = await fetch(`${PROXY}/api/recommend`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ authToken, cookie, fid, tid: post.tid })
+      });
+      const data = await res.json();
+      const ok   = data.success || data.raw?.status === 1;
+      box.textContent += `${ok ? '✓' : '✗'} Thread #${post.tid} — ${post.title.slice(0,30)}...\n`;
+      if (ok) success++; else failed++;
+    } catch(e) {
+      box.textContent += `✗ Thread #${post.tid} — Error: ${e.message}\n`;
+      failed++;
+    }
+    await new Promise(r => setTimeout(r, 500)); // 500ms delay between requests
+  }
+
+  box.textContent += `\nDone! ✓ ${success} boosted, ✗ ${failed} failed`;
+  toast(`Bulk boost done: ${success} success, ${failed} failed`, success > 0 ? 'success' : 'error');
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Bulk Boost All Published Posts';
+}
+
+// ══════════════════════════════════════════
+//  USER LOOKUP
+// ══════════════════════════════════════════
+async function lookupUser() {
+  const uuid      = document.getElementById('lookup-uuid').value.trim();
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const btn       = document.getElementById('btn-lookup');
+  const resultEl  = document.getElementById('lookup-result');
+  const errorEl   = document.getElementById('lookup-error');
+
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Searching...';
+  resultEl.style.display = 'none';
+  errorEl.style.display  = 'none';
+
+  try {
+    const params = new URLSearchParams({ authToken, cookie });
+    if (uuid) params.set('uuid', uuid);
+
+    const res  = await fetch(`${PROXY}/api/user-info?${params}`);
+    const json = await res.json();
+
+    if (!res.ok || json.error) throw new Error(json.error || 'Lookup failed');
+
+    const d = json.data?.data || json.data || {};
+
+    // Fill profile card — exact fields from API response
+    document.getElementById('lu-avatar').src              = d.decInfo?.avatar || d.current_user?.avatar || d.avatar || '';
+    document.getElementById('lu-username').textContent    = d.username || '—';
+    document.getElementById('lu-uid').textContent         = String(d.uid || d.user_id || uuid || '—');
+    document.getElementById('lu-realname').textContent    = d.real_name || '—';
+    document.getElementById('lu-email').textContent       = d.email || '—';
+    document.getElementById('lu-nationality').textContent = d.nationality || d.country || '—';
+    document.getElementById('lu-group').textContent       = d.group?.grouptitle || '—';
+    document.getElementById('lu-grouptitle').textContent  = d.group?.grouptitle || '';
+    document.getElementById('lu-grouptitle').style.background = (d.group?.color || '#00e5ff') + '22';
+    document.getElementById('lu-grouptitle').style.color      = d.group?.color || 'var(--accent)';
+    document.getElementById('lu-posts').textContent       = d.credits ? d.credits + ' credits' : '—';
+
+    // Birthday
+    const by = d.birthyear, bm = d.birthmonth, bd = d.birthday;
+    document.getElementById('lu-joined').textContent = (by && bm && bd) ? `${bd}/${bm}/${by}` : '—';
+
+    // Profile URL
+    const profileUrl = `https://www.infinix.club/space/${d.uid || uuid}`;
+    const luUrl = document.getElementById('lu-url');
+    luUrl.href = profileUrl;
+    luUrl.textContent = profileUrl;
+
+    // Medals + Tags + Bio
+    const medals = d.medals || [];
+    const tags   = d.user_interest_tag || [];
+    const medalsHtml = medals.map(m =>
+      `<img src="${m.s3_medal}" title="${m.name}" style="width:36px;height:36px;object-fit:contain;border-radius:4px" onerror="this.style.display='none'">`
+    ).join('');
+    const tagsHtml = tags.map(t =>
+      `<span style="font-size:10px;padding:2px 8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:10px;color:var(--muted)">${t.tag_name}</span>`
+    ).join('');
+
+    let extraHtml = '';
+    if (medalsHtml) extraHtml += `<div style="margin-top:14px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Medals</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${medalsHtml}</div></div>`;
+    if (tagsHtml)   extraHtml += `<div style="margin-top:14px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Interests</div><div style="display:flex;gap:6px;flex-wrap:wrap">${tagsHtml}</div></div>`;
+    if (d.sightml)  extraHtml += `<div style="margin-top:14px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Bio</div><div style="font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.6">${d.sightml}</div></div>`;
+    document.getElementById('lu-extra').innerHTML = extraHtml;
+
+    document.getElementById('lu-raw').textContent = JSON.stringify(json.data, null, 2);
+    resultEl.style.display = 'block';
+    toast('✓ User found!', 'success');
+
+  } catch(e) {
+    errorEl.style.display  = 'block';
+    errorEl.textContent    = '✗ ' + e.message;
+    toast('Lookup failed: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 Search';
+}
+
+function lookupSelf() {
+  // Extract uid from JWT token
+  const token = state.creds.token || '';
+  if (!token) { toast('Save Auth Token first!', 'warn'); return; }
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const uid = payload?.jti?.id || '';
+    document.getElementById('lookup-uuid').value = uid;
+    toast(`Your UID: ${uid}`, 'info');
+    lookupUser();
+  } catch(e) {
+    toast('Could not extract UID from token', 'error');
+  }
+}
+
+function toggleRaw() {
+  const raw = document.getElementById('lu-raw');
+  raw.style.display = raw.style.display === 'none' ? 'block' : 'none';
 }
 
 function toggleIt(id) { document.getElementById(id).classList.toggle('on'); }
