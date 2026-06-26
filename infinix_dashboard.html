@@ -638,7 +638,14 @@
   <div class="logo"><span class="logo-x">✕</span> Infinix<span style="color:var(--muted);font-weight:400">Club</span> Dashboard</div>
   <div class="sep"></div>
   <div class="status-pill"><div class="status-dot"></div> API Connected</div>
-  <div class="user-chip"><div class="avatar">SA</div> Sohail6651</div>
+  <div class="user-chip">
+    <div style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1.5px solid var(--accent)">
+      <img id="nav-avatar-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
+      <div id="nav-avatar" style="width:100%;height:100%;background:linear-gradient(135deg,var(--accent3),var(--accent));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'Syne',sans-serif">?</div>
+    </div>
+    <span id="nav-username">Loading...</span>
+  </div>
+  <button onclick="logout()" style="background:rgba(255,59,107,0.1);border:1px solid rgba(255,59,107,0.3);color:var(--danger);padding:4px 12px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;transition:all 0.15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,59,107,0.1)';this.style.color='var(--danger)'">⏏ Logout</button>
 </nav>
 
 <div class="shell">
@@ -649,8 +656,10 @@
   <button class="side-btn" onclick="nav('compose')"><span class="icon">✦</span> Compose Post <span class="badge">AI</span></button>
   <button class="side-btn" onclick="nav('schedule')"><span class="icon">◷</span> Schedule</button>
   <button class="side-btn" onclick="nav('log')"><span class="icon">≡</span> Post Log</button>
-  <button class="side-btn" onclick="nav('lookup')"><span class="icon">🔍</span> User Lookup</button>
+  <button class="side-btn admin-only" onclick="nav('lookup')" style="display:none"><span class="icon">🔍</span> User Lookup</button>
   <button class="side-btn" onclick="nav('bulk')"><span class="icon">⚡</span> Bulk Poster <span class="badge">50</span></button>
+  <button class="side-btn" onclick="nav('viral')"><span class="icon">🔥</span> Viral Posts</button>
+  <button class="side-btn" onclick="nav('engage')"><span class="icon">❤️</span> Auto Like/Comment</button>
   <div class="side-label" style="margin-top:12px">Config</div>
   <button class="side-btn" onclick="nav('settings')"><span class="icon">⊙</span> Settings</button>
 </aside>
@@ -1073,9 +1082,36 @@
       </div>
     </div>
     <div class="card-body">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Enter one topic per line — max 50 topics</div>
-      <textarea id="bulk-topics" style="min-height:200px;font-size:12px;line-height:1.8" placeholder="Beyond: Two Souls PS4 Review&#10;Infamous Second Son Gameplay&#10;God of War Best Moments&#10;PUBG Mobile Tips and Tricks&#10;..."></textarea>
-      <div style="margin-top:8px;font-size:11px;color:var(--muted)" id="bulk-topic-count">0 topics</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Enter one topic per line — max 50 topics. Line 1 = 1.png, Line 2 = 2.png...</div>
+      <textarea id="bulk-topics" style="min-height:200px;font-size:12px;line-height:1.8" placeholder="Beyond: Two Souls PS4 Review&#10;Infamous Second Son Gameplay&#10;God of War Best Moments&#10;..."></textarea>
+      <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:11px;color:var(--muted)" id="bulk-topic-count">0 topics</div>
+      </div>
+
+      <!-- Image Folder -->
+      <div style="margin-top:16px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:10px">
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          🖼 Cover Images
+          <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(1.png = topic 1, 2.png = topic 2...)</span>
+        </label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface2);border:1px dashed var(--border);border-radius:8px;position:relative;overflow:hidden;cursor:pointer"
+               id="bulk-folder-label">
+            <span style="font-size:22px">📁</span>
+            <div style="flex:1">
+              <div style="font-size:13px;color:var(--accent);font-weight:600">Click to Select Images</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px" id="bulk-folder-info">No images selected — select 1.png, 2.png, 3.png...</div>
+            </div>
+            <input type="file" id="bulk-images-input" accept="image/png,image/jpeg,image/jpg,image/webp" multiple
+                   onchange="loadBulkImages(this)"
+                   style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;margin:0;padding:0">
+          </div>
+          <button class="btn btn-secondary" style="padding:10px 14px;font-size:12px;white-space:nowrap" onclick="clearBulkImages()">✕ Clear</button>
+        </div>
+
+        <!-- Image preview strip -->
+        <div id="bulk-images-preview" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
     </div>
   </div>
 
@@ -1120,6 +1156,38 @@
             <option value="60000">1 minute</option>
           </select>
         </div>
+      </div>
+
+      <!-- Auto Image Toggle -->
+      <div style="padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;color:var(--text);font-weight:600">🔍 Auto Image from Topic</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Automatically search & upload image for each topic</div>
+          </div>
+          <div class="toggle" id="tog-auto-image" onclick="toggleIt('tog-auto-image')" style="flex-shrink:0;margin-left:16px"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="test-img-topic" placeholder="Test: Valorant gameplay..." style="flex:1;padding:7px 12px;font-size:12px">
+          <button class="btn btn-secondary" style="font-size:11px;padding:7px 12px;white-space:nowrap" onclick="testAutoImage()">🧪 Test Image</button>
+        </div>
+        <div id="test-img-result" style="display:none;margin-top:10px">
+          <img id="test-img-preview" src="" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+          <div id="test-img-status" style="font-size:11px;margin-top:6px;color:var(--muted)"></div>
+        </div>
+      </div>
+
+      <!-- Custom Prompt Box -->
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">✏ Custom AI Prompt</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary" style="font-size:10px;padding:4px 10px" onclick="resetBulkPrompt()">↺ Reset Default</button>
+            <button class="btn btn-primary" style="font-size:10px;padding:4px 10px" onclick="saveBulkPrompt()">💾 Save Prompt</button>
+          </div>
+        </div>
+        <textarea id="bulk-prompt" style="min-height:140px;font-size:12px;line-height:1.7;font-family:'DM Mono',monospace" placeholder="Enter custom prompt..."></textarea>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Use <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">{topic}</code>, <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">{tone}</code>, <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">{language}</code> as placeholders</div>
       </div>
 
       <div class="btn-row">
@@ -1171,6 +1239,145 @@
   </div>
 </div>
 
+<!-- ═══ VIRAL POSTS ═══ -->
+<div class="page" id="page-viral">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Viral <span>Posts</span></div>
+      <div class="page-sub">Posts with high views from your account</div>
+    </div>
+    <button class="btn btn-primary" id="btn-fetch-viral" onclick="fetchViralPosts()">🔄 Refresh</button>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="card">
+    <div class="card-body" style="padding:16px 20px">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap">Min Views</label>
+          <input type="number" id="viral-min-views" value="500" min="0" style="width:100px;padding:6px 10px;font-size:12px">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap">Sort By</label>
+          <select id="viral-sort" style="padding:6px 10px;font-size:12px">
+            <option value="views">Views (High→Low)</option>
+            <option value="replies">Replies</option>
+            <option value="likes">Likes</option>
+            <option value="date">Date (Newest)</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" style="padding:7px 14px;font-size:12px" onclick="applyViralFilter()">Apply Filter</button>
+        <div id="viral-count" style="font-size:12px;color:var(--muted);margin-left:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posts grid -->
+  <div id="viral-posts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+    <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:48px;font-size:13px">
+      Click "🔄 Refresh" to load your posts from Infinix Club
+    </div>
+  </div>
+
+  <!-- Load more -->
+  <div id="viral-load-more" style="display:none;text-align:center">
+    <button class="btn btn-secondary" onclick="loadMoreViralPosts()">Load More Posts</button>
+  </div>
+</div>
+
+<!-- ═══ AUTO LIKE/COMMENT ═══ -->
+<div class="page" id="page-engage">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Auto <span>Like / Comment</span></div>
+      <div class="page-sub">Enter a Thread ID — auto like & comment after a delay</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>🎯 Target Post</h3></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Thread ID (tid)</label>
+          <input type="text" id="engage-tid" placeholder="e.g. 12417724">
+        </div>
+        <div class="form-group">
+          <label>Delay Before Action</label>
+          <select id="engage-delay">
+            <option value="5000">5 seconds</option>
+            <option value="10000" selected>10 seconds</option>
+            <option value="15000">15 seconds</option>
+            <option value="30000">30 seconds</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px">
+            <span class="toggle on" id="tog-engage-like" onclick="toggleIt('tog-engage-like')" style="margin:0"></span>
+            👍 Auto Like
+          </label>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px">
+            <span class="toggle on" id="tog-engage-comment" onclick="toggleIt('tog-engage-comment')" style="margin:0"></span>
+            💬 Auto Comment
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Comment Count (kitni baar comment karna hai is post pe)</label>
+          <input type="number" id="engage-repeat-count" value="1" min="1" max="100" placeholder="e.g. 10, 20, 80">
+        </div>
+        <div class="form-group">
+          <label>Delay Between Each Comment</label>
+          <select id="engage-repeat-delay">
+            <option value="3000">3 seconds</option>
+            <option value="5000" selected>5 seconds</option>
+            <option value="10000">10 seconds</option>
+            <option value="15000">15 seconds</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
+        ℹ️ Like sirf 1 baar ho sakta hai (Infinix system) — Comment count se baar baar comment honge same post pe.
+      </div>
+
+      <div class="form-group full" style="margin-bottom:16px">
+        <label>Comment Message(s) — multiple lines = random pick har baar</label>
+        <textarea id="engage-comment" style="min-height:90px" placeholder="Nice post! 🔥&#10;Great share!&#10;Love this 👍">Nice post! 🔥</textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-engage-start" onclick="startAutoEngage()">▶ Start (after delay)</button>
+        <button class="btn btn-danger" id="btn-engage-stop" onclick="stopAutoEngage()" disabled>⏹ Cancel</button>
+      </div>
+
+      <div id="engage-status" style="display:none;margin-top:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- Queue list for multiple tids -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📋 Queue (multiple posts)</h3>
+      <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="addToEngageQueue()">➕ Add to Queue</button>
+    </div>
+    <div class="card-body">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Add current tid + settings to queue, then run all with individual delays</div>
+      <div id="engage-queue-list" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Queue is empty</div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px;width:100%" id="btn-engage-queue-start" onclick="runEngageQueue()">⚡ Run Entire Queue</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SETTINGS ═══ -->
 <div class="page" id="page-settings">
   <div class="page-header">
@@ -1183,6 +1390,17 @@
   <div class="settings-grid">
     <div class="settings-card">
       <h3>🔑 API Credentials</h3>
+
+      <!-- Account Switcher -->
+      <div style="margin-bottom:16px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Active Account</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="account-tabs"></div>
+        <button class="btn btn-secondary" style="margin-top:8px;width:100%;font-size:11px;padding:6px" onclick="addNewAccount()">➕ Add Account</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Account Name</label>
+        <input type="text" id="set-acc-name" placeholder="e.g. Sohail6651, AamnaMalik786...">
+      </div>
       <div class="form-group" style="margin-bottom:12px">
         <label>Groq API Key</label>
         <input type="password" id="set-groq" placeholder="gsk_...">
@@ -1195,7 +1413,8 @@
         <label>Cookie String</label>
         <textarea id="set-cookie" style="min-height:80px" placeholder="_ga=..."></textarea>
       </div>
-      <button class="btn btn-primary" onclick="saveCredentials()">💾 Save Credentials</button>
+      <button class="btn btn-primary" onclick="saveCredentials()">💾 Save Account</button>
+      <button class="btn btn-danger" style="margin-top:8px;width:100%" onclick="deleteCurrentAccount()">🗑 Delete This Account</button>
       <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="debugCredentials()">🔍 Test Credentials</button>
       <button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:var(--warning);color:var(--warning)" onclick="debugPublish()">🧪 Test Publish (Dry Run)</button>
       <div id="debug-result" style="display:none;margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all"></div>
@@ -1260,8 +1479,52 @@
       </div>
     </div>
 
+    <!-- ── USER MANAGEMENT CARD ── -->
+    <div class="settings-card admin-only" style="grid-column:1/-1;display:none">
+      <h3>👥 User Management</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+        <!-- Add User -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Add New User</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Username</label>
+            <input type="text" id="new-username" placeholder="e.g. ahmad786">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Password</label>
+            <input type="password" id="new-password" placeholder="Strong password...">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Display Name</label>
+            <input type="text" id="new-name" placeholder="e.g. Ahmad Ali">
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>Role</label>
+            <select id="new-role">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="addUser()">➕ Add User</button>
+          <div id="add-user-result" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:8px"></div>
+        </div>
+
+        <!-- Users List -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:11px;color:var(--muted)">Existing Users</div>
+            <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="loadUsers()">↻ Refresh</button>
+          </div>
+          <div id="users-list" style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:12px;color:var(--muted);padding:16px;text-align:center">Click Refresh to load users</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── FOR YOU BOOST CARD ── -->
-    <div class="settings-card" style="grid-column:1/-1">
+    <div class="settings-card admin-only" style="grid-column:1/-1;display:none">
       <h3>🚀 Boost Post to "For You" / Recommend</h3>
       <div style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">
         Push your post into the <strong style="color:var(--accent)">For You / Recommend</strong> section using the
@@ -1400,17 +1663,23 @@ function processImageFile(file, prefix) {
   reader.readAsDataURL(file);
 }
 
-function clearFileUpload(prefix) {
+function clearFileUpload(prefix, silent = false) {
   imageStore[prefix] = null;
-  document.getElementById(prefix + '-img-preview-box').style.display = 'none';
-  document.getElementById(prefix + '-upload-progress').style.display = 'none';
-  document.getElementById(prefix + '-upload-status').style.display = 'none';
-  document.getElementById(prefix + '-file-input').value = '';
+  const previewBox = document.getElementById(prefix + '-img-preview-box');
+  const progress   = document.getElementById(prefix + '-upload-progress');
+  const status     = document.getElementById(prefix + '-upload-status');
+  const fileInput  = document.getElementById(prefix + '-file-input');
+  if (previewBox) previewBox.style.display = 'none';
+  if (progress)   progress.style.display   = 'none';
+  if (status)     status.style.display     = 'none';
+  if (fileInput)  fileInput.value          = '';
   if (prefix === 'ai') {
-    document.getElementById('ai-img-thumb').style.display = 'none';
-    document.getElementById('ai-img-preview').src = '';
+    const thumb   = document.getElementById('ai-img-thumb');
+    const preview = document.getElementById('ai-img-preview');
+    if (thumb)   thumb.style.display = 'none';
+    if (preview) preview.src         = '';
   }
-  toast('Image removed', 'warn');
+  if (!silent) toast('Image removed', 'warn');
 }
 
 function formatBytes(bytes) {
@@ -1570,9 +1839,11 @@ function nav(page) {
   if(page==='overview') refreshOverview();
   if(page==='log')      refreshLog();
   if(page==='schedule') refreshSchedule();
-  if(page==='settings') loadSettings();
+  if(page==='settings') { loadSettings(); renderAccountTabs(); }
   if(page==='lookup')   { document.getElementById('lookup-result').style.display='none'; document.getElementById('lookup-error').style.display='none'; }
-  if(page==='bulk')     { updateBulkCount(); }
+  if(page==='bulk')     { updateBulkCount(); initBulkPrompt(); }
+  if(page==='viral')    { if(!allFetchedPosts.length) fetchViralPosts(); }
+  if(page==='engage')   { renderEngageQueue(); const c=getEngageBulkTids().length; document.getElementById('engage-bulk-count').textContent = `${c} thread ID${c!==1?'s':''}`; }
 }
 
 // ══════════════════════════════════════════
@@ -1610,7 +1881,7 @@ function refreshOverview() {
       <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
       <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
-      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/forum/293${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
       <td style="color:var(--muted);font-size:11px">${timeAgo(p.time)}</td>
       <td>${p.tid ? `<button class="btn" style="padding:3px 8px;font-size:10px;background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3)" onclick="recommendPost(${p.tid},${p.fid||293})">⭐</button>` : ''}</td>
     </tr>
@@ -1620,7 +1891,14 @@ function refreshOverview() {
 // ══════════════════════════════════════════
 //  PROXY
 // ══════════════════════════════════════════
-const PROXY = 'http://localhost:3000';
+// ── Auto-detect server URL (localhost + mobile + ngrok) ──
+function getServerURL() {
+  const h = window.location;
+  if (h.port === '3000') return `${h.protocol}//${h.hostname}:3000`;
+  if (h.hostname !== 'localhost' && h.hostname !== '127.0.0.1') return `${h.protocol}//${h.host}`;
+  return 'http://localhost:3000';
+}
+const PROXY = getServerURL();
 
 // ══════════════════════════════════════════
 //  GENERATE POST
@@ -1754,7 +2032,7 @@ async function publishPost() {
 
     toast(`✓ Post published! Thread #${data.tid}`, 'success');
     currentGenerated = null;
-    clearFileUpload('ai');
+    clearFileUpload('ai', true);
     document.getElementById('ai-result').classList.remove('show');
     refreshOverview();
 
@@ -1808,7 +2086,7 @@ async function manualPublish() {
     toast(`✓ Manual post published! Thread #${data.tid}`, 'success');
     document.getElementById('man-title').value   = '';
     document.getElementById('man-content').value = '';
-    clearFileUpload('man');
+    clearFileUpload('man', true);
     refreshOverview();
   } catch(e) {
     toast('Manual publish failed: ' + e.message, 'error');
@@ -1846,7 +2124,7 @@ function refreshLog() {
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px">${p.topic||'—'}</td>
       <td style="font-size:11px">${p.lang||'—'}</td>
       <td><span class="pill pill-${p.status==='published'?'success':p.status==='failed'?'fail':'pending'}">${p.status}</span></td>
-      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/forum/293${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
+      <td>${p.tid ? `<a class="tid-link" href="https://www.infinix.club/t/${p.tid}" target="_blank">#${p.tid}</a>` : '—'}</td>
       <td style="color:var(--muted);font-size:11px">${new Date(p.time).toLocaleString()}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         ${p.tid ? `<button class="btn" style="padding:4px 8px;font-size:10px;background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3)" onclick="recommendPost(${p.tid},${p.fid||293})">⭐ Recommend</button>` : ''}
@@ -1952,22 +2230,151 @@ function deleteSched(id) {
 // ══════════════════════════════════════════
 //  SETTINGS
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+//  MULTI-ACCOUNT SYSTEM
+// ══════════════════════════════════════════
+function getAccounts() {
+  return JSON.parse(localStorage.getItem('ixc_accounts') || '[]');
+}
+function saveAccounts(accounts) {
+  localStorage.setItem('ixc_accounts', JSON.stringify(accounts));
+}
+function getActiveAccountIndex() {
+  return parseInt(localStorage.getItem('ixc_active_account') || '0');
+}
+function setActiveAccountIndex(idx) {
+  localStorage.setItem('ixc_active_account', idx);
+}
+
+function renderAccountTabs() {
+  const accounts = getAccounts();
+  const active   = getActiveAccountIndex();
+  const tabs     = document.getElementById('account-tabs');
+  if (!tabs) return;
+
+  if (!accounts.length) {
+    tabs.innerHTML = '<div style="font-size:11px;color:var(--muted)">No accounts saved</div>';
+    return;
+  }
+
+  tabs.innerHTML = accounts.map((acc, i) => `
+    <button onclick="switchAccount(${i})"
+      style="padding:5px 12px;font-size:11px;border-radius:8px;border:1px solid ${i===active?'var(--accent)':'var(--border)'};
+             background:${i===active?'rgba(0,229,255,0.12)':'var(--surface2)'};
+             color:${i===active?'var(--accent)':'var(--muted)'};cursor:pointer;font-family:inherit;transition:all 0.15s">
+      ${i===active?'✓ ':''}${acc.name || 'Account '+(i+1)}
+    </button>
+  `).join('');
+}
+
+function switchAccount(idx) {
+  const accounts = getAccounts();
+  if (!accounts[idx]) return;
+
+  setActiveAccountIndex(idx);
+  const acc = accounts[idx];
+
+  // Update state.creds
+  state.creds.groq   = acc.groq   || '';
+  state.creds.token  = acc.token  || '';
+  state.creds.cookie = acc.cookie || '';
+  save();
+
+  // Update form fields
+  document.getElementById('set-acc-name').value = acc.name  || '';
+  document.getElementById('set-groq').value      = acc.groq  || '';
+  document.getElementById('set-token').value     = acc.token || '';
+  document.getElementById('set-cookie').value    = acc.cookie|| '';
+
+  // Update compose fields
+  if (acc.groq)  document.getElementById('inp-groq').value  = acc.groq;
+  if (acc.token) document.getElementById('inp-token').value = acc.token;
+
+  renderAccountTabs();
+  toast(`✓ Switched to: ${acc.name || 'Account '+(idx+1)}`, 'success');
+
+  // Refresh avatar for new account
+  localStorage.removeItem('ixc_avatar');
+  fetchNavAvatar();
+}
+
+function addNewAccount() {
+  const accounts = getAccounts();
+  const newIdx   = accounts.length;
+  accounts.push({ name: 'Account '+(newIdx+1), groq: '', token: '', cookie: '' });
+  saveAccounts(accounts);
+  switchAccount(newIdx);
+  toast('New account added — fill in credentials and save', 'info');
+}
+
+function deleteCurrentAccount() {
+  const accounts = getAccounts();
+  const active   = getActiveAccountIndex();
+
+  if (accounts.length <= 1) { toast('At least one account required!', 'warn'); return; }
+  if (!confirm(`Delete account "${accounts[active]?.name}"?`)) return;
+
+  accounts.splice(active, 1);
+  saveAccounts(accounts);
+  const newActive = Math.max(0, active - 1);
+  setActiveAccountIndex(newActive);
+  switchAccount(newActive);
+  toast('Account deleted', 'warn');
+}
+
 function loadSettings() {
-  if(state.creds.groq)   document.getElementById('set-groq').value   = state.creds.groq;
-  if(state.creds.token)  document.getElementById('set-token').value  = state.creds.token;
-  if(state.creds.cookie) document.getElementById('set-cookie').value = state.creds.cookie;
+  const accounts = getAccounts();
+
+  // If no accounts yet — migrate existing creds to account 0
+  if (!accounts.length) {
+    accounts.push({
+      name:   'Main Account',
+      groq:   state.creds.groq   || '',
+      token:  state.creds.token  || '',
+      cookie: state.creds.cookie || ''
+    });
+    saveAccounts(accounts);
+  }
+
+  const active = getActiveAccountIndex();
+  const acc    = accounts[Math.min(active, accounts.length-1)] || accounts[0];
+
+  document.getElementById('set-acc-name').value = acc.name   || '';
+  document.getElementById('set-groq').value      = acc.groq   || '';
+  document.getElementById('set-token').value     = acc.token  || '';
+  document.getElementById('set-cookie').value    = acc.cookie || '';
   document.getElementById('set-lang').value = state.defaults.lang||'Urdu';
   document.getElementById('set-tone').value = state.defaults.tone||'casual and friendly';
   document.getElementById('set-fid').value  = state.defaults.fid||293;
+
+  renderAccountTabs();
 }
 
 function saveCredentials() {
-  state.creds.groq   = document.getElementById('set-groq').value;
-  state.creds.token  = document.getElementById('set-token').value;
-  state.creds.cookie = document.getElementById('set-cookie').value;
-  save(); toast('Credentials saved ✓','success');
-  if(state.creds.groq)  document.getElementById('inp-groq').value  = state.creds.groq;
-  if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
+  const name   = document.getElementById('set-acc-name').value.trim() || 'Account';
+  const groq   = document.getElementById('set-groq').value.trim();
+  const token  = document.getElementById('set-token').value.trim();
+  const cookie = document.getElementById('set-cookie').value.trim();
+
+  const accounts = getAccounts();
+  const active   = getActiveAccountIndex();
+
+  // Update current account
+  accounts[active] = { name, groq, token, cookie };
+  saveAccounts(accounts);
+
+  // Update active state
+  state.creds.groq   = groq;
+  state.creds.token  = token;
+  state.creds.cookie = cookie;
+  save();
+
+  // Update compose fields
+  if (groq)  document.getElementById('inp-groq').value  = groq;
+  if (token) document.getElementById('inp-token').value = token;
+
+  renderAccountTabs();
+  toast(`✓ Account "${name}" saved!`, 'success');
 }
 
 async function debugCredentials() {
@@ -2045,10 +2452,52 @@ function saveDefaults() {
 }
 
 // ══════════════════════════════════════════
-//  BULK POSTER
+//  BULK PROMPT
 // ══════════════════════════════════════════
+const DEFAULT_BULK_PROMPT = `You are a creative Urdu/English poetry writer for a social media forum.
+
+Topic: "{topic}"
+Language: {language}
+Tone: {tone}
+
+Write a short poetic post with:
+- A catchy poetic title (1 line)
+- ONLY 2 lines of poetry related to the topic
+- The 2 lines should rhyme or have rhythm
+- Add 1-2 relevant emojis
+- End with a short question to engage readers
+
+Return ONLY raw JSON (no markdown, no backticks):
+{"title": "Poetic title here", "content": "Line 1 of poetry\\nLine 2 of poetry\\n\\nWhat do you think? 💭"}`;
+
+function initBulkPrompt() {
+  const saved = localStorage.getItem('ixc_bulk_prompt');
+  document.getElementById('bulk-prompt').value = saved || DEFAULT_BULK_PROMPT;
+}
+
+function saveBulkPrompt() {
+  const prompt = document.getElementById('bulk-prompt').value.trim();
+  if (!prompt) { toast('Prompt empty hai!', 'warn'); return; }
+  localStorage.setItem('ixc_bulk_prompt', prompt);
+  toast('✓ Prompt saved!', 'success');
+}
+
+function resetBulkPrompt() {
+  document.getElementById('bulk-prompt').value = DEFAULT_BULK_PROMPT;
+  localStorage.removeItem('ixc_bulk_prompt');
+  toast('Prompt reset to default', 'info');
+}
+
+function getBulkPrompt(topic, tone, language) {
+  const template = document.getElementById('bulk-prompt').value.trim() || DEFAULT_BULK_PROMPT;
+  return template
+    .replace(/{topic}/g, topic)
+    .replace(/{tone}/g, tone || 'casual and friendly')
+    .replace(/{language}/g, language || 'English');
+}
 let bulkRunning = false;
 let bulkStop    = false;
+let bulkImages  = {}; // { 1: {base64, fileName}, 2: {...}, ... }
 
 document.addEventListener('DOMContentLoaded', () => {
   const ta = document.getElementById('bulk-topics');
@@ -2068,6 +2517,100 @@ function getBulkTopics() {
 function clearBulkTopics() {
   document.getElementById('bulk-topics').value = '';
   updateBulkCount();
+}
+
+function loadBulkImages(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  bulkImages = {};
+  const preview = document.getElementById('bulk-images-preview');
+  preview.innerHTML = '';
+  preview.style.display = 'flex';
+
+  let loaded = 0;
+  files.forEach(file => {
+    // Extract number from filename: "1.png" → 1, "2.jpg" → 2
+    const match = file.name.match(/^(\d+)\./);
+    const num   = match ? parseInt(match[1]) : null;
+    if (!num) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      bulkImages[num] = { base64: e.target.result, fileName: file.name };
+      loaded++;
+
+      // Add thumbnail
+      const thumb = document.createElement('div');
+      thumb.style.cssText = 'position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)';
+      thumb.innerHTML = `
+        <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);font-size:9px;text-align:center;padding:2px;color:#fff">${num}</div>
+      `;
+      preview.appendChild(thumb);
+
+      if (loaded === files.filter(f => f.name.match(/^\d+\./)).length) {
+        const keys = Object.keys(bulkImages).sort((a,b) => a-b);
+        document.getElementById('bulk-folder-info').textContent = `${keys.length} images loaded (${keys.join(', ')})`;
+        toast(`✓ ${keys.length} images loaded`, 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function clearBulkImages() {
+  bulkImages = {};
+  document.getElementById('bulk-images-input').value = '';
+  document.getElementById('bulk-images-preview').innerHTML = '';
+  document.getElementById('bulk-images-preview').style.display = 'none';
+  document.getElementById('bulk-folder-info').textContent = 'No folder selected';
+  toast('Images cleared', 'warn');
+}
+
+async function testAutoImage() {
+  const topic     = document.getElementById('test-img-topic').value.trim() || 'Valorant gaming';
+  const authToken = state.creds.token || document.getElementById('inp-token')?.value.trim() || '';
+  const cookie    = state.creds.cookie || '';
+  const resultEl  = document.getElementById('test-img-result');
+  const statusEl  = document.getElementById('test-img-status');
+  const imgEl     = document.getElementById('test-img-preview');
+
+  if (!authToken) {
+    toast('Settings mein Auth Token save karo pehle!', 'warn');
+    resultEl.style.display = 'block';
+    statusEl.style.color   = 'var(--danger)';
+    statusEl.textContent   = '✗ Auth Token missing — Settings mein save karo';
+    return;
+  }
+
+  resultEl.style.display = 'block';
+  imgEl.style.display    = 'none';
+  statusEl.style.color   = 'var(--muted)';
+  statusEl.textContent   = `⏳ Searching image for: "${topic}"...`;
+
+  try {
+    const res  = await fetch(`${PROXY}/api/auto-image`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ topic, authToken, cookie })
+    });
+    const data = await res.json();
+
+    if (data.aid && data.url) {
+      imgEl.src            = data.url;
+      imgEl.style.display  = 'block';
+      statusEl.style.color = 'var(--success)';
+      statusEl.textContent = `✓ Uploaded! aid: ${data.aid}`;
+      toast('✓ Auto image kaam kar raha hai!', 'success');
+    } else {
+      throw new Error(data.error || 'No image returned');
+    }
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = '✗ ' + e.message;
+    toast('Auto image failed: ' + e.message, 'error');
+  }
 }
 
 function loadSampleTopics() {
@@ -2150,13 +2693,15 @@ async function startBulkPost() {
     document.getElementById('bulk-current-status').textContent = '⏳ Generating with AI...';
 
     try {
-      // Step 1: Generate
+      // Step 1: Generate with custom prompt
       bulkLog(`[${i+1}/${total}] Generating: "${topic.slice(0,40)}..."`, 'info');
+
+      const customPrompt = getBulkPrompt(topic, tone, lang);
 
       const genRes = await fetch(`${PROXY}/api/generate`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ topic, tone, language: lang, groqKey })
+        body:    JSON.stringify({ topic, tone, language: lang, groqKey, customPrompt })
       });
       const genData = await genRes.json();
       if (!genRes.ok || genData.error) throw new Error('Generate failed: ' + (genData.error || 'Unknown'));
@@ -2165,14 +2710,64 @@ async function startBulkPost() {
       document.getElementById('bulk-current-status').textContent = '🚀 Publishing...';
       bulkLog(`  → Title: "${genData.title.slice(0,50)}"`, 'info');
 
-      // Step 2: Publish
+      // Step 2: Get image — auto search OR manual folder
+      let imageAid = '';
+      const imgNum     = i + 1;
+      const autoImage  = document.getElementById('tog-auto-image').classList.contains('on');
+
+      if (autoImage) {
+        // Auto: search Unsplash by topic
+        document.getElementById('bulk-current-status').textContent = '🔍 Searching image...';
+        bulkLog(`  → Searching image for: "${topic.slice(0,30)}..."`, 'info');
+        try {
+          const imgRes = await fetch(`${PROXY}/api/auto-image`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ topic, authToken, cookie })
+          });
+          const imgData = await imgRes.json();
+          if (imgData.aid) {
+            imageAid = imgData.aid;
+            bulkLog(`  → Image found & uploaded! aid: ${imageAid}`, 'success');
+          } else {
+            bulkLog(`  ⚠ Auto image failed: ${imgData.error} — posting without image`, 'warn');
+          }
+        } catch(imgErr) {
+          bulkLog(`  ⚠ Auto image error: ${imgErr.message}`, 'warn');
+        }
+      } else if (bulkImages[imgNum]) {
+        // Manual: use numbered image from folder
+        document.getElementById('bulk-current-status').textContent = `🖼 Uploading image ${imgNum}...`;
+        bulkLog(`  → Uploading image ${imgNum}...`, 'info');
+        try {
+          const imgRes = await fetch(`${PROXY}/api/upload-image`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+              base64:   bulkImages[imgNum].base64,
+              fileName: bulkImages[imgNum].fileName,
+              authToken,
+              cookie
+            })
+          });
+          const imgData = await imgRes.json();
+          if (imgData.aid) {
+            imageAid = imgData.aid;
+            bulkLog(`  → Image uploaded! aid: ${imageAid}`, 'success');
+          }
+        } catch(imgErr) {
+          bulkLog(`  ⚠ Image upload failed: ${imgErr.message}`, 'warn');
+        }
+      }
+
+      // Step 3: Publish
       const pubRes = await fetch(`${PROXY}/api/publish`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           title:     genData.title,
           content:   genData.content,
-          imageAid:  '',
+          imageAid,
           topid:     parseInt(topid),
           fid:       293,
           authToken,
@@ -2230,26 +2825,26 @@ async function startBulkPost() {
   bulkLog(`\nDone! ✓ ${success} published, ✗ ${failed} failed, ⏭ ${skipped} skipped`, success > 0 ? 'success' : 'error');
   toast(`Bulk done! ${success} published, ${failed} failed`, success > 0 ? 'success' : 'error');
 
-   // Play ringing notification sound
+  // Play ringing notification sound
   playDoneSound();
- 
+
   bulkRunning = false;
   document.getElementById('btn-bulk-start').disabled = false;
   document.getElementById('btn-bulk-stop').disabled  = true;
   refreshOverview();
   playDoneSound();
 }
- 
+
 function stopBulkPost() {
   bulkStop = true;
   toast('Stopping after current post...', 'warn');
   document.getElementById('btn-bulk-stop').disabled = true;
 }
- 
+
 function playDoneSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
- 
+
     // Ringing tone — 3 beeps
     const beeps = [
       { freq: 880, start: 0.0,  dur: 0.15 },
@@ -2260,7 +2855,7 @@ function playDoneSound() {
       { freq: 880,  start: 1.25, dur: 0.15 },
       { freq: 1100, start: 1.5,  dur: 0.4  },
     ];
- 
+
     beeps.forEach(b => {
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -2273,18 +2868,18 @@ function playDoneSound() {
       osc.start(ctx.currentTime + b.start);
       osc.stop(ctx.currentTime  + b.start + b.dur + 0.05);
     });
- 
+
     // Auto close context after sound
     setTimeout(() => ctx.close(), 3000);
   } catch(e) {
     console.warn('Sound error:', e.message);
   }
 }
- 
+
 function playDoneSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
- 
+
     // Ringing tone — 3 rings
     const rings = [0, 0.6, 1.2];
     rings.forEach(startTime => {
@@ -2294,20 +2889,20 @@ function playDoneSound() {
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
- 
+
         osc.type      = 'sine';
         osc.frequency.setValueAtTime(1200, ctx.currentTime + startTime + offset);
         osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + startTime + offset + 0.12);
- 
+
         gain.gain.setValueAtTime(0, ctx.currentTime + startTime + offset);
         gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + startTime + offset + 0.01);
         gain.gain.linearRampToValueAtTime(0, ctx.currentTime + startTime + offset + 0.14);
- 
+
         osc.start(ctx.currentTime + startTime + offset);
         osc.stop(ctx.currentTime + startTime + offset + 0.15);
       });
     });
- 
+
     // Final long success tone
     const finalOsc  = ctx.createOscillator();
     const finalGain = ctx.createGain();
@@ -2320,12 +2915,532 @@ function playDoneSound() {
     finalGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.4);
     finalOsc.start(ctx.currentTime + 1.8);
     finalOsc.stop(ctx.currentTime + 2.5);
- 
+
   } catch(e) {
     console.log('Audio not supported:', e.message);
   }
 }
- 
+
+// ══════════════════════════════════════════
+//  VIRAL POSTS
+// ══════════════════════════════════════════
+let allFetchedPosts = [];
+let viralPage       = 1;
+
+async function fetchViralPosts(append = false) {
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  const btn       = document.getElementById('btn-fetch-viral');
+  const grid      = document.getElementById('viral-posts-grid');
+
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  allFetchedPosts = [];
+  btn.disabled    = true;
+  btn.innerHTML   = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Loading...';
+
+  const logPosts = state.posts.filter(p => p.status === 'published' && p.tid);
+
+  if (!logPosts.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:48px">No published posts in log!</div>`;
+    btn.disabled = false; btn.innerHTML = '🔄 Refresh';
+    return;
+  }
+
+  grid.innerHTML = `<div style="grid-column:1/-1;padding:32px">
+    <div style="text-align:center;color:var(--muted);margin-bottom:16px">
+      <div class="spinner" style="border-top-color:var(--accent);border-color:rgba(0,229,255,0.2);width:24px;height:24px;margin:0 auto 12px"></div>
+      Fetching <strong id="viral-fetch-progress" style="color:var(--accent)">0</strong> / <strong>${logPosts.length}</strong> posts...
+    </div>
+    <div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden">
+      <div id="viral-fetch-bar" style="height:100%;background:var(--accent);width:0%;transition:width 0.2s;border-radius:4px"></div>
+    </div>
+  </div>`;
+
+  const params  = new URLSearchParams({ authToken, cookie });
+  const results = [];
+  let fetched   = 0;
+  const BATCH   = 50; // 50 parallel requests
+
+  // Process in batches of 10
+  for (let i = 0; i < logPosts.length; i += BATCH) {
+    const batch = logPosts.slice(i, i + BATCH);
+
+    const batchResults = await Promise.allSettled(
+      batch.map(post =>
+        fetch(`${PROXY}/api/thread/${post.tid}?${params}`)
+          .then(r => r.json())
+          .then(data => data.success ? {
+            tid:       data.tid,
+            subject:   data.subject || post.title,
+            views:     data.views,
+            replies:   data.replies,
+            like:      data.likes,
+            share_num: data.shares,
+            dateline:  data.dateline,
+            imageUrl:  post.imageUrl || ''
+          } : null)
+          .catch(() => null)
+      )
+    );
+
+    batchResults.forEach(r => {
+      if (r.status === 'fulfilled' && r.value) results.push(r.value);
+    });
+
+    fetched += batch.length;
+
+    // Update progress
+    const prog = document.getElementById('viral-fetch-progress');
+    const bar  = document.getElementById('viral-fetch-bar');
+    if (prog) prog.textContent = fetched;
+    if (bar)  bar.style.width  = Math.round((fetched / logPosts.length) * 100) + '%';
+  }
+
+  allFetchedPosts = results;
+  document.getElementById('viral-load-more').style.display = 'none';
+  applyViralFilter();
+  toast(`✓ ${results.length} posts loaded!`, 'success');
+
+  btn.disabled = false;
+  btn.innerHTML = '🔄 Refresh';
+}
+
+function applyViralFilter() {
+  const minViews = parseInt(document.getElementById('viral-min-views').value) || 0;
+  const sortBy   = document.getElementById('viral-sort').value;
+  const grid     = document.getElementById('viral-posts-grid');
+
+  let filtered = allFetchedPosts.filter(p => (p.views || 0) >= minViews);
+
+  // Sort
+  filtered.sort((a, b) => {
+    if (sortBy === 'views')   return (b.views   || 0) - (a.views   || 0);
+    if (sortBy === 'replies') return (b.replies || 0) - (a.replies || 0);
+    if (sortBy === 'likes')   return (b.like    || 0) - (a.like    || 0);
+    if (sortBy === 'date')    return (b.dateline|| 0) - (a.dateline|| 0);
+    return 0;
+  });
+
+  document.getElementById('viral-count').textContent =
+    filtered.length ? `${filtered.length} posts found` : 'No posts match filter';
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:48px;font-size:13px">
+      No posts with ${minViews}+ views found
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const views   = (p.views   || 0).toLocaleString();
+    const replies = p.replies  || 0;
+    const likes   = p.like     || 0;
+    const tid     = p.tid;
+    const url     = `https://www.infinix.club/t/${tid}`;
+    const cover   = p.attachments?.[0]?.attachment || p.imageUrl || '';
+    const date    = p.dateline ? new Date(p.dateline * 1000).toLocaleDateString() : '—';
+    const viewNum = p.views || 0;
+    const isFire  = viewNum >= 5000;
+    const isHot   = viewNum >= 1000;
+
+    return `
+      <div style="background:var(--surface);border:1px solid ${isFire?'rgba(255,59,107,0.4)':isHot?'rgba(0,229,255,0.3)':'var(--border)'};border-radius:12px;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s"
+           onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+           onmouseout="this.style.transform='';this.style.boxShadow=''">
+        ${cover ? `<img src="${cover}" style="width:100%;height:140px;object-fit:cover;display:block" onerror="this.style.display='none'">` : ''}
+        <div style="padding:16px">
+          <!-- Badge -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            ${isFire ? '<span style="font-size:10px;padding:2px 8px;background:rgba(255,59,107,0.15);color:var(--danger);border:1px solid rgba(255,59,107,0.3);border-radius:10px">🔥 VIRAL</span>' :
+              isHot  ? '<span style="font-size:10px;padding:2px 8px;background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.2);border-radius:10px">⚡ HOT</span>' :
+                       '<span style="font-size:10px;padding:2px 8px;background:rgba(0,214,143,0.1);color:var(--success);border:1px solid rgba(0,214,143,0.2);border-radius:10px">📈 TRENDING</span>'}
+            <span style="font-size:10px;color:var(--muted);margin-left:auto">${date}</span>
+          </div>
+
+          <!-- Title -->
+          <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+            ${p.subject || 'Untitled'}
+          </div>
+
+          <!-- Stats -->
+          <div style="display:flex;gap:12px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:${isFire?'var(--danger)':isHot?'var(--accent)':'var(--success)'}">
+              👁 <strong>${views}</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)">
+              💬 ${replies}
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)">
+              👍 ${likes}
+            </div>
+          </div>
+
+          <!-- Link -->
+          <a href="${url}" target="_blank"
+             style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--accent);font-size:12px;text-decoration:none;transition:background 0.15s"
+             onmouseover="this.style.background='rgba(0,229,255,0.15)'"
+             onmouseout="this.style.background='rgba(0,229,255,0.08)'">
+            🔗 View Post #${tid}
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadMoreViralPosts() {
+  viralPage++;
+  await fetchViralPosts(true);
+}
+
+let bulkEngageRunning = false;
+let bulkEngageStop    = false;
+
+function getEngageBulkTids() {
+  const raw = document.getElementById('engage-bulk-tids').value;
+  return raw.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('engage-bulk-tids');
+  if (ta) ta.addEventListener('input', () => {
+    const count = getEngageBulkTids().length;
+    document.getElementById('engage-bulk-count').textContent = `${count} thread ID${count!==1?'s':''}`;
+  });
+});
+
+function engageBulkLog(msg, type = 'info') {
+  const log = document.getElementById('bulk-engage-log');
+  if (!log) return;
+  const color = type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : type === 'warn' ? 'var(--warning)' : 'var(--muted)';
+  const icon  = type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warn' ? '⚠' : '•';
+  const line  = document.createElement('div');
+  line.style.color = color;
+  line.textContent = `${icon} ${msg}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function startBulkEngage() {
+  const tids = getEngageBulkTids();
+
+  if (tids.length < 5)  { toast('Minimum 5 Thread IDs required!', 'warn'); return; }
+  if (tids.length > 50) { toast('Maximum 50 Thread IDs allowed!', 'warn'); return; }
+
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  if (!authToken) { toast('Save Auth Token in Settings first!', 'warn'); return; }
+
+  const doLike    = document.getElementById('tog-bulk-like').classList.contains('on');
+  const doComment = document.getElementById('tog-bulk-comment').classList.contains('on');
+  if (!doLike && !doComment) { toast('Like ya Comment select karo!', 'warn'); return; }
+
+  const delay     = parseInt(document.getElementById('engage-bulk-delay').value);
+  const comments  = document.getElementById('engage-bulk-comments').value
+                       .split('\n').map(c => c.trim()).filter(c => c.length > 0);
+  const fallbackComments = comments.length ? comments : ['Nice post! 🔥'];
+
+  bulkEngageStop    = false;
+  bulkEngageRunning = true;
+  document.getElementById('btn-bulk-engage-start').disabled = true;
+  document.getElementById('btn-bulk-engage-stop').disabled  = false;
+  document.getElementById('bulk-engage-progress-wrap').style.display = 'block';
+  document.getElementById('bulk-engage-log').innerHTML = '';
+  document.getElementById('bulk-engage-summary').style.display = 'none';
+
+  let success = 0, failed = 0;
+  const total = tids.length;
+
+  engageBulkLog(`Starting bulk engage — ${total} posts | Like: ${doLike} | Comment: ${doComment}`, 'info');
+
+  for (let i = 0; i < total; i++) {
+    if (bulkEngageStop) { engageBulkLog('Stopped by user', 'warn'); break; }
+
+    const tid = tids[i];
+    const pct = Math.round((i / total) * 100);
+    document.getElementById('bulk-engage-progress-bar').style.width  = pct + '%';
+    document.getElementById('bulk-engage-progress-text').textContent = `${i} / ${total}`;
+
+    const randomComment = fallbackComments[Math.floor(Math.random() * fallbackComments.length)];
+
+    engageBulkLog(`[${i+1}/${total}] Processing thread #${tid}...`, 'info');
+
+    try {
+      const results = await doLikeAndComment(tid, doLike, doComment, randomComment, (msg) => engageBulkLog(`  ${msg}`));
+
+      const okLike    = !doLike    || results.like;
+      const okComment = !doComment || results.comment;
+
+      if (okLike && okComment) {
+        success++;
+        engageBulkLog(`✓ Thread #${tid} engaged successfully`, 'success');
+      } else {
+        failed++;
+        engageBulkLog(`⚠ Thread #${tid} partially failed`, 'warn');
+      }
+    } catch(e) {
+      failed++;
+      engageBulkLog(`✗ Thread #${tid} error: ${e.message}`, 'error');
+    }
+
+    document.getElementById('bulk-engage-success-count').textContent = success;
+    document.getElementById('bulk-engage-fail-count').textContent    = failed;
+    document.getElementById('bulk-engage-summary').style.display     = 'grid';
+
+    if (i < total - 1 && !bulkEngageStop) {
+      engageBulkLog(`⏳ Waiting ${delay/1000}s before next post...`, 'info');
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  document.getElementById('bulk-engage-progress-bar').style.width  = '100%';
+  document.getElementById('bulk-engage-progress-text').textContent = `${total} / ${total}`;
+  engageBulkLog(`\nDone! ✓ ${success} engaged, ✗ ${failed} failed`, success > 0 ? 'success' : 'error');
+  toast(`Bulk engage done! ${success} success, ${failed} failed`, success > 0 ? 'success' : 'error');
+
+  bulkEngageRunning = false;
+  document.getElementById('btn-bulk-engage-start').disabled = false;
+  document.getElementById('btn-bulk-engage-stop').disabled  = true;
+}
+
+function stopBulkEngage() {
+  bulkEngageStop = true;
+  toast('Stopping after current post...', 'warn');
+  document.getElementById('btn-bulk-engage-stop').disabled = true;
+}
+
+// ══════════════════════════════════════════
+//  AUTO LIKE / COMMENT (single)
+// ══════════════════════════════════════════
+let engageTimer    = null;
+let engageCancelled = false;
+let engageQueue  = [];
+
+async function getThreadPid(tid, authToken, cookie) {
+  const params = new URLSearchParams({ authToken, cookie });
+  const r = await fetch(`${PROXY}/api/thread/${tid}?${params}`);
+  const d = await r.json();
+  if (!d.success) throw new Error('Could not fetch thread info');
+  return d.pid;
+}
+
+async function doLikeAndComment(tid, doLike, doComment, message, logFn) {
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  if (!authToken) throw new Error('Auth Token missing — save in Settings');
+
+  let pid;
+  try {
+    pid = await getThreadPid(tid, authToken, cookie);
+  } catch(e) {
+    throw new Error('Failed to get post info: ' + e.message);
+  }
+
+  const results = {};
+
+  if (doLike) {
+    logFn?.(`👍 Liking post #${tid}...`);
+    const r = await fetch(`${PROXY}/api/like`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ pid, authToken, cookie })
+    });
+    const d = await r.json();
+    results.like = d.success;
+    logFn?.(d.success ? `✓ Liked!` : `✗ Like failed: ${JSON.stringify(d.raw || d.error)}`);
+  }
+
+  if (doComment) {
+    logFn?.(`💬 Commenting on #${tid}...`);
+    const r = await fetch(`${PROXY}/api/comment`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ tid, message: message || 'Nice post! 🔥', authToken, cookie })
+    });
+    const d = await r.json();
+    results.comment = d.success;
+    logFn?.(d.success ? `✓ Commented!` : `✗ Comment failed: ${JSON.stringify(d.raw || d.error)}`);
+  }
+
+  return results;
+}
+
+function startAutoEngage() {
+  const tid          = document.getElementById('engage-tid').value.trim();
+  const delay        = parseInt(document.getElementById('engage-delay').value);
+  const doLike       = document.getElementById('tog-engage-like').classList.contains('on');
+  const doComment    = document.getElementById('tog-engage-comment').classList.contains('on');
+  const messages     = document.getElementById('engage-comment').value
+                          .split('\n').map(c => c.trim()).filter(c => c.length > 0);
+  const repeatCount  = Math.max(1, Math.min(100, parseInt(document.getElementById('engage-repeat-count').value) || 1));
+  const repeatDelay  = parseInt(document.getElementById('engage-repeat-delay').value);
+  const fallbackMsgs = messages.length ? messages : ['Nice post! 🔥'];
+
+  if (!tid)                 { toast('Thread ID darkar hai!', 'warn'); return; }
+  if (!doLike && !doComment){ toast('Like ya Comment mein se ek select karo!', 'warn'); return; }
+
+  engageCancelled = false;
+
+  const statusEl = document.getElementById('engage-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color   = 'var(--muted)';
+
+  let remaining = delay / 1000;
+  statusEl.textContent = `⏳ Waiting ${remaining}s before engaging post #${tid}...`;
+
+  document.getElementById('btn-engage-start').disabled = true;
+  document.getElementById('btn-engage-stop').disabled  = false;
+
+  const countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining > 0) {
+      statusEl.textContent = `⏳ Waiting ${remaining}s before engaging post #${tid}...`;
+    }
+  }, 1000);
+
+  engageTimer = setTimeout(async () => {
+    clearInterval(countdownInterval);
+
+    let likeDone     = !doLike; // if not requested, treat as "done"
+    let commentsDone = 0;
+    const totalComments = doComment ? repeatCount : 0;
+
+    try {
+      // Like once (Infinix only allows 1 like per post per account)
+      if (doLike) {
+        statusEl.textContent = `👍 Liking post #${tid}...`;
+        const likeResult = await doLikeAndComment(tid, true, false, '', null);
+        likeDone = true;
+        statusEl.textContent = likeResult.like ? `✓ Liked post #${tid}` : `⚠ Like failed (already liked?)`;
+      }
+
+      // Comment repeatCount times with delay between each
+      for (let i = 0; i < totalComments; i++) {
+        if (engageCancelled) break;
+        const msg = fallbackMsgs[Math.floor(Math.random() * fallbackMsgs.length)];
+        statusEl.textContent = `💬 Comment ${i+1}/${totalComments} on post #${tid}...`;
+
+        try {
+          const r = await fetch(`${PROXY}/api/comment`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ tid, message: msg, authToken: state.creds.token, cookie: state.creds.cookie })
+          });
+          const d = await r.json();
+          if (d.success) commentsDone++;
+        } catch(e) {}
+
+        if (i < totalComments - 1) {
+          await new Promise(r => setTimeout(r, repeatDelay));
+        }
+      }
+
+      statusEl.style.color = 'var(--success)';
+      let summary = [];
+      if (doLike)    summary.push('✓ Liked');
+      if (doComment) summary.push(`✓ ${commentsDone}/${totalComments} comments posted`);
+      statusEl.textContent = summary.join(' | ') + ` on post #${tid}`;
+      toast(`Done: ${summary.join(', ')}`, 'success');
+
+    } catch(e) {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = '✗ ' + e.message;
+      toast('Engage failed: ' + e.message, 'error');
+    }
+
+    document.getElementById('btn-engage-start').disabled = false;
+    document.getElementById('btn-engage-stop').disabled  = true;
+    engageTimer = null;
+  }, delay);
+}
+
+function stopAutoEngage() {
+  if (engageTimer) {
+    clearTimeout(engageTimer);
+  }
+  engageTimer     = null;
+  engageCancelled = true;
+  document.getElementById('engage-status').textContent = '⏹ Cancelled';
+  document.getElementById('engage-status').style.color  = 'var(--warning)';
+  document.getElementById('btn-engage-start').disabled = false;
+  document.getElementById('btn-engage-stop').disabled  = true;
+  toast('Auto engage cancelled', 'warn');
+}
+
+function addToEngageQueue() {
+  const tid       = document.getElementById('engage-tid').value.trim();
+  const delay     = parseInt(document.getElementById('engage-delay').value);
+  const doLike    = document.getElementById('tog-engage-like').classList.contains('on');
+  const doComment = document.getElementById('tog-engage-comment').classList.contains('on');
+  const message   = document.getElementById('engage-comment').value.trim();
+
+  if (!tid) { toast('Thread ID darkar hai!', 'warn'); return; }
+
+  engageQueue.push({ tid, delay, doLike, doComment, message, status: 'pending' });
+  renderEngageQueue();
+  document.getElementById('engage-tid').value = '';
+  toast(`✓ Added #${tid} to queue`, 'success');
+}
+
+function renderEngageQueue() {
+  const listEl = document.getElementById('engage-queue-list');
+  if (!engageQueue.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Queue is empty</div>';
+    return;
+  }
+
+  listEl.innerHTML = engageQueue.map((item, i) => {
+    const statusColor = item.status === 'done' ? 'var(--success)' : item.status === 'running' ? 'var(--accent)' : item.status === 'failed' ? 'var(--danger)' : 'var(--muted)';
+    const statusIcon  = item.status === 'done' ? '✓' : item.status === 'running' ? '⏳' : item.status === 'failed' ? '✗' : '•';
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
+        <span style="color:${statusColor};font-size:14px">${statusIcon}</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">Thread #${item.tid}</div>
+          <div style="font-size:10px;color:var(--muted)">${item.doLike?'👍 Like':''} ${item.doComment?'💬 Comment':''} · ${item.delay/1000}s delay</div>
+        </div>
+        <button onclick="removeFromQueue(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function removeFromQueue(idx) {
+  engageQueue.splice(idx, 1);
+  renderEngageQueue();
+}
+
+async function runEngageQueue() {
+  if (!engageQueue.length) { toast('Queue khali hai!', 'warn'); return; }
+
+  const btn = document.getElementById('btn-engage-queue-start');
+  btn.disabled  = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:#000;border-color:rgba(0,0,0,0.2)"></div> Running...';
+
+  for (let i = 0; i < engageQueue.length; i++) {
+    const item = engageQueue[i];
+    item.status = 'running';
+    renderEngageQueue();
+
+    // Wait for this item's delay
+    await new Promise(r => setTimeout(r, item.delay));
+
+    try {
+      await doLikeAndComment(item.tid, item.doLike, item.doComment, item.message);
+      item.status = 'done';
+      toast(`✓ Engaged #${item.tid}`, 'success');
+    } catch(e) {
+      item.status = 'failed';
+      toast(`✗ #${item.tid} failed: ${e.message}`, 'error');
+    }
+    renderEngageQueue();
+  }
+
+  btn.disabled  = false;
+  btn.innerHTML = '⚡ Run Entire Queue';
+  toast('Queue finished!', 'success');
+}
 
 // ══════════════════════════════════════════
 //  BOOST TO FOR YOU / RECOMMEND
@@ -2513,6 +3628,130 @@ function toggleRaw() {
 
 function toggleIt(id) { document.getElementById(id).classList.toggle('on'); }
 
+function setNavAvatar(url) {
+  const img = document.getElementById('nav-avatar-img');
+  const txt = document.getElementById('nav-avatar');
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+    txt.style.display = 'none';
+    img.onerror = () => {
+      img.style.display = 'none';
+      txt.style.display = 'flex';
+    };
+  }
+}
+
+async function fetchNavAvatar() {
+  const authToken = state.creds.token || '';
+  const cookie    = state.creds.cookie || '';
+  if (!authToken) return;
+
+  try {
+    // Extract uid from JWT
+    const payload = JSON.parse(atob(authToken.split('.')[1]));
+    const uid     = payload?.jti?.id || '';
+    if (!uid) return;
+
+    const params = new URLSearchParams({ authToken, cookie, uuid: uid });
+    const res    = await fetch(`${PROXY}/api/user-info?${params}`);
+    const json   = await res.json();
+
+    const d      = json.data?.data || json.data || {};
+    const avatar = d.decInfo?.avatar || d.current_user?.avatar || d.avatar || '';
+
+    if (avatar) {
+      localStorage.setItem('ixc_avatar', avatar);
+      setNavAvatar(avatar);
+    }
+  } catch(e) {
+    console.warn('Avatar fetch failed:', e.message);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('ixc_auth');
+  localStorage.removeItem('ixc_user');
+  localStorage.removeItem('ixc_role');
+  localStorage.removeItem('ixc_name');
+  localStorage.removeItem('ixc_avatar');
+  window.location.href = getServerURL() + '/login.html';
+}
+
+// ══════════════════════════════════════════
+//  USER MANAGEMENT
+// ══════════════════════════════════════════
+async function loadUsers() {
+  const listEl = document.getElementById('users-list');
+  listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:16px;text-align:center">⏳ Loading...</div>';
+  try {
+    const res  = await fetch(`${PROXY}/api/users`);
+    const data = await res.json();
+    if (!data.users?.length) {
+      listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:16px;text-align:center">No users found</div>';
+      return;
+    }
+    listEl.innerHTML = data.users.map(u => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent3),var(--accent));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">
+          ${(u.name||u.username).charAt(0).toUpperCase()}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${u.name||u.username}</div>
+          <div style="font-size:10px;color:var(--muted)">@${u.username} · <span style="color:${u.role==='admin'?'var(--accent)':'var(--success)'}">${u.role}</span></div>
+        </div>
+        ${u.username !== 'sohailasghar'
+          ? `<button onclick="deleteUser('${u.username}')" style="padding:4px 10px;font-size:10px;background:rgba(255,59,107,0.1);color:var(--danger);border:1px solid rgba(255,59,107,0.3);border-radius:6px;cursor:pointer;font-family:inherit">Delete</button>`
+          : '<span style="font-size:10px;color:var(--accent)">OWNER</span>'}
+      </div>
+    `).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div style="font-size:12px;color:var(--danger);padding:16px;text-align:center">✗ ${e.message}</div>`;
+  }
+}
+
+async function addUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value.trim();
+  const name     = document.getElementById('new-name').value.trim();
+  const role     = document.getElementById('new-role').value;
+  const resultEl = document.getElementById('add-user-result');
+  if (!username || !password) { toast('Username and password required!', 'warn'); return; }
+  try {
+    const res  = await fetch(`${PROXY}/api/users/add`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, name, role })
+    });
+    const data = await res.json();
+    if (data.success) {
+      resultEl.style.cssText = 'display:block;background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);color:var(--success);padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px';
+      resultEl.textContent = `✓ User @${username} added!`;
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('new-name').value = '';
+      toast(`✓ User @${username} added!`, 'success');
+      loadUsers();
+    } else throw new Error(data.error || 'Failed');
+  } catch(e) {
+    resultEl.style.cssText = 'display:block;background:rgba(255,59,107,0.1);border:1px solid rgba(255,59,107,0.3);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:12px;margin-top:10px';
+    resultEl.textContent = '✗ ' + e.message;
+    toast('Failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Delete user @${username}?`)) return;
+  try {
+    const res  = await fetch(`${PROXY}/api/users/delete`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (data.success) { toast(`✓ @${username} deleted`, 'success'); loadUsers(); }
+    else throw new Error(data.error);
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
 // ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
@@ -2528,6 +3767,58 @@ function timeAgo(ts) {
 //  INIT
 // ══════════════════════════════════════════
 (function init() {
+  // ── Read auth from URL params (ngrok cross-origin fix) ──
+  const urlParams = new URLSearchParams(window.location.search);
+  const authParam = urlParams.get('a');
+  if (authParam) {
+    try {
+      const d = JSON.parse(atob(authParam));
+      if (d.auth) {
+        localStorage.setItem('ixc_auth', 'true');
+        localStorage.setItem('ixc_user', d.user || '');
+        localStorage.setItem('ixc_role', d.role || 'user');
+        localStorage.setItem('ixc_name', d.name || d.user || '');
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch(e) {}
+  }
+
+  // ── Auth check — redirect to login if not authenticated ──
+  if (!localStorage.getItem('ixc_auth')) {
+    window.location.href = getServerURL() + '/login.html';
+    return;
+  }
+
+  // ── Block back button after logout ──
+  window.addEventListener('pageshow', function(e) {
+    if (!localStorage.getItem('ixc_auth')) {
+      window.location.href = getServerURL() + '/login.html';
+    }
+  });
+
+  // ── Show logged-in username ──
+  const username = localStorage.getItem('ixc_user') || 'User';
+  const role     = localStorage.getItem('ixc_role') || 'user';
+  const name     = localStorage.getItem('ixc_name') || username;
+
+  document.getElementById('nav-username').textContent = name || username;
+  document.getElementById('nav-avatar').textContent   = (name || username).charAt(0).toUpperCase();
+
+  // ── Fetch XClub profile picture ──
+  const savedAvatar = localStorage.getItem('ixc_avatar');
+  if (savedAvatar) {
+    setNavAvatar(savedAvatar);
+  } else {
+    fetchNavAvatar();
+  }
+
+  // ── Role-based UI ──
+  if (role === 'admin') {
+    // Show admin-only elements
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+  }
+  // Non-admin: admin-only elements stay hidden (display:none default)
   renderTopics();
   if(state.creds.groq)  document.getElementById('inp-groq').value  = state.creds.groq;
   if(state.creds.token) document.getElementById('inp-token').value = state.creds.token;
