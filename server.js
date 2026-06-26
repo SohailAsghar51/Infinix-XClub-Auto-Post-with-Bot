@@ -16,41 +16,139 @@ const path     = require("path");
 const app  = express();
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
+}));
 app.use(express.json({ limit: "20mb" }));
+
+// ── Skip ngrok browser warning ────────────
+app.use((req, res, next) => {
+  res.setHeader('ngrok-skip-browser-warning', 'true');
+  next();
+});
 
 // ── Serve frontend ───────────────────────
 app.use(express.static(path.join(__dirname)));
 
+// ── Root → Login page ────────────────────
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "login.html"));
+});
+
+// ── Users storage (JSON file) ─────────────
+const fs          = require("fs");
+const USERS_FILE  = path.join(__dirname, "users.json");
+
+function loadUsers() {
+  try {
+    if (fs.existsSync(USERS_FILE)) return JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
+  } catch(e) {}
+  // Default admin
+  return { sohailasghar: { password: "Sohail@6651", role: "admin", name: "SohailAsghar", createdAt: Date.now() } };
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
+
+// ── GET all users ─────────────────────────
+app.get("/api/users", (req, res) => {
+  const users = loadUsers();
+  // Don't send passwords
+  const safe = Object.entries(users).map(([username, u]) => ({
+    username, role: u.role, name: u.name, createdAt: u.createdAt
+  }));
+  res.json({ success: true, users: safe });
+});
+
+// ── ADD user ──────────────────────────────
+app.post("/api/users/add", (req, res) => {
+  const { username, password, role, name } = req.body;
+  if (!username || !password) return res.status(400).json({ error: "Username and password required" });
+
+  const users = loadUsers();
+  if (users[username.toLowerCase()]) return res.status(400).json({ error: "Username already exists" });
+
+  users[username.toLowerCase()] = {
+    password,
+    role:      role || "user",
+    name:      name || username,
+    createdAt: Date.now()
+  };
+  saveUsers(users);
+  res.json({ success: true, message: `User ${username} added` });
+});
+
+// ── DELETE user ───────────────────────────
+app.post("/api/users/delete", (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  if (username.toLowerCase() === "sohailasghar") return res.status(400).json({ error: "Cannot delete admin" });
+
+  const users = loadUsers();
+  if (!users[username.toLowerCase()]) return res.status(404).json({ error: "User not found" });
+
+  delete users[username.toLowerCase()];
+  saveUsers(users);
+  res.json({ success: true, message: `User ${username} deleted` });
+});
+
+// ── CHANGE password ───────────────────────
+app.post("/api/users/password", (req, res) => {
+  const { username, newPassword } = req.body;
+  if (!username || !newPassword) return res.status(400).json({ error: "Username and new password required" });
+
+  const users = loadUsers();
+  if (!users[username.toLowerCase()]) return res.status(404).json({ error: "User not found" });
+
+  users[username.toLowerCase()].password = newPassword;
+  saveUsers(users);
+  res.json({ success: true, message: "Password updated" });
+});
+
+// ── VERIFY login ──────────────────────────
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+  const users = loadUsers();
+  const user  = users[username?.toLowerCase()];
+
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: "Invalid username or password" });
+  }
+
+  res.json({ success: true, role: user.role, name: user.name, username: username.toLowerCase() });
+});
+
 // ── 1. AI Generate Route ─────────────────
 app.post("/api/generate", async (req, res) => {
-  const { topic, tone, language, groqKey } = req.body;
+  const { topic, tone, language, groqKey, customPrompt } = req.body;
   if (!topic) return res.status(400).json({ error: "Topic required" });
 
-  const prompt = `Act as a professional gaming content creator.
-
-Create a viral social media post about the following topic.
-
-Requirements:
-- Start with a powerful catchy title (1 line)
-- Write 2/3 short engaging lines about the topic
-- Highlight gameplay, story, and graphics if relevant
-- Add why gamers love this
-- Use emojis (🎮🔥⚔️🌍)
-- Keep it short, stylish, and attractive
-- Add a call-to-action (Play now / Try it today)
+  // Use custom prompt if provided, else use default
+  const prompt = customPrompt || `You are a real Pakistani gamer writing casually on a forum. Write like a real person — not a marketer or AI.
 
 Topic: "${topic}"
-Tone: ${tone || "casual and friendly"}
 Language: ${language || "English"}
+Tone: ${tone || "casual and friendly"}
 
-Guidelines:
-- Sound like a real community member, not a marketer
-- Include a question or call-to-action at the end to spark replies
-- Length: 150-300 words
+Rules:
+- Write like you personally played/experienced this
+- Use "I", "me", "my experience" naturally
+- Add personal opinion — something you liked OR didn't like
+- Include ONE specific detail (a character name, a level, a feature, a date)
+- Use 2-3 emojis max — don't overdo it
+- Structure with 3 short sections using [b]heading[/b] BBCode
+- Section 1: Your personal experience with it
+- Section 2: What makes it special (be specific)
+- Section 3: Ask a question to spark replies
+- Length: 120-200 words total
+- NO generic marketing phrases like "stunning graphics", "immersive experience", "take it to the next level"
+- Sound genuinely excited but real
 
 Return ONLY raw JSON (no markdown, no backticks):
-{"title": "Engaging post title here", "content": "Full post content here"}`;
+{"title": "Short casual title here", "content": "Post content with [b]headings[/b]"}`;
 
   try {
     // Try Anthropic first
@@ -187,15 +285,28 @@ app.post("/api/publish", async (req, res) => {
   if (!authToken)          return res.status(400).json({ error: "Auth token required" });
 
   // Build BBCode — image first as [attach], then text
-  const bbText = content
-    .split("\n")
-    .filter(l => l.trim())
-    .map(l => `[p]${l.trim()}[/p]`)
-    .join("");
+  // Split content by [b] headings and format each section properly
+  const lines = content.split(/(\[b\].*?\[\/b\])/g).filter(l => l.trim());
 
-  // Exact format from browser: image in [p][attach]aid[/attach][/p], then text
-  const imageTag    = imageAid ? `[p][attach]${imageAid}[/attach][/p]` : "";
-  const fullMessage = `[div]${imageTag}${bbText}[/div]`;
+  let bbParts = [];
+  if (imageAid) bbParts.push(`[p][attach]${imageAid}[/attach][/p]`);
+
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    if (line.startsWith('[b]') && line.endsWith('[/b]')) {
+      // Heading — add blank line before, then heading on its own line
+      bbParts.push(`[p][br][/p]`);
+      bbParts.push(`[p]${line}[/p]`);
+    } else {
+      // Regular text — split by sentences/newlines
+      line.split('\n').filter(l => l.trim()).forEach(l => {
+        bbParts.push(`[p]${l.trim()}[/p]`);
+      });
+    }
+  });
+
+  const fullMessage = `[div]${bbParts.join('')}[/div]`;
 
   // aids = "12848129," (aid + comma), covers = [] when image in body
   const aids   = imageAid ? `${imageAid},` : "";
@@ -443,9 +554,293 @@ app.get("/api/user-info", async (req, res) => {
   }
 });
 
+// ── 8. Auto Image Search ─────────────────
+app.post("/api/auto-image", async (req, res) => {
+  const { topic, authToken, cookie } = req.body;
+  if (!authToken) return res.status(400).json({ error: "Auth token required" });
+
+  const keyword = topic
+    .replace(/[^a-zA-Z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ').slice(0, 4).join('+');
+
+  console.log(`\n━━━ AUTO IMAGE: "${keyword}" ━━━`);
+
+  let imageBuffer = null;
+
+  // Source 1: Pixabay — random from top 10 results
+  try {
+    const r = await fetch(
+      `https://pixabay.com/api/?key=49103461-c0f4b57db193c22b8b3b5a9f7&q=${keyword}&image_type=photo&orientation=horizontal&per_page=20&safesearch=true&order=popular`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    const d = await r.json();
+    if (d?.hits?.length > 0) {
+      const pick = d.hits[Math.floor(Math.random() * Math.min(10, d.hits.length))];
+      const url  = pick.largeImageURL || pick.webformatURL;
+      const dl   = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (dl.ok) {
+        imageBuffer = await dl.buffer();
+        console.log(`✓ Pixabay: ${pick.tags} | ${Math.round(imageBuffer.length/1024)}KB`);
+      }
+    }
+  } catch(e) { console.warn('Pixabay failed:', e.message); }
+
+  // Source 2: Bing scrape — random from results
+  if (!imageBuffer || imageBuffer.length < 5000) {
+    try {
+      const r = await fetch(
+        `https://www.bing.com/images/search?q=${keyword}&first=1&count=20&mkt=en-US`,
+        { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept-Language': 'en-US' } }
+      );
+      const html = await r.text();
+      const matches = [...html.matchAll(/murl&quot;:&quot;(https?:\/\/[^&"]+\.(?:jpg|jpeg|png))/gi)];
+      const urls = matches
+        .map(m => m[1])
+        .filter(u => !u.includes('bing.com') && !u.includes('microsoft.com') && u.length < 300)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 8);
+
+      console.log(`Bing found ${urls.length} URLs`);
+      for (const url of urls) {
+        try {
+          const dl = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+          if (dl.ok && (dl.headers.get('content-type')||''). startsWith('image/')) {
+            imageBuffer = await dl.buffer();
+            if (imageBuffer.length > 10000) {
+              console.log(`✓ Bing: ${url.slice(0,60)} | ${Math.round(imageBuffer.length/1024)}KB`);
+              break;
+            }
+          }
+        } catch(e) {}
+      }
+    } catch(e) { console.warn('Bing failed:', e.message); }
+  }
+
+  // Source 3: Picsum RANDOM (different every time — no seed)
+  if (!imageBuffer || imageBuffer.length < 5000) {
+    try {
+      const randId = Math.floor(Math.random() * 1000) + 1;
+      const r = await fetch(`https://picsum.photos/id/${randId}/800/500`, {
+        redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      if (r.ok) {
+        imageBuffer = await r.buffer();
+        console.log(`✓ Picsum random id=${randId}`);
+      }
+    } catch(e) { console.warn('Picsum failed:', e.message); }
+  }
+
+  if (!imageBuffer || imageBuffer.length < 1000) {
+    return res.status(500).json({ error: "Could not fetch image from any source" });
+  }
+
+  // Upload to Infinix CDN
+  const safeName = keyword.replace(/\+/g, '_').slice(0, 20) + '.jpg';
+  const form     = new FormData();
+  form.append("file", imageBuffer, { filename: safeName, contentType: 'image/jpeg' });
+
+  try {
+    const uploadRes = await fetch("https://infinix.club/v5/content/imageUpload", {
+      method:  "POST",
+      headers: {
+        ...form.getHeaders(),
+        "xclub-authorization": authToken,
+        "cookie":              cookie || "",
+        "user-agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+        "referer":             "https://infinix.club/note/thread",
+        "origin":              "https://infinix.club",
+        "accept":              "application/json, text/plain, */*",
+        "accept-language-api": "en",
+        "sec-fetch-dest":      "empty",
+        "sec-fetch-mode":      "cors",
+        "sec-fetch-site":      "same-origin"
+      },
+      body: form
+    });
+    const uploadData = JSON.parse(await uploadRes.text());
+    if (uploadData.status === 1 && uploadData.data?.aid) {
+      console.log(`✓ Uploaded — aid: ${uploadData.data.aid}`);
+      return res.json({ success: true, aid: String(uploadData.data.aid), url: uploadData.data.fileUrl });
+    }
+    throw new Error(uploadData.msg || 'Infinix upload failed');
+  } catch(err) {
+    console.error("Upload error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── 9. Fetch user's posts with views ─────
+app.get("/api/my-posts", async (req, res) => {
+  const { authToken, cookie, page = 1, limit = 20 } = req.query;
+  if (!authToken) return res.status(400).json({ error: "Auth token required" });
+
+  try {
+    // Extract uid from JWT token
+    let uid = '';
+    try {
+      const payload = JSON.parse(Buffer.from(authToken.split('.')[1], 'base64').toString());
+      uid = payload?.jti?.id || '';
+    } catch(e) {}
+
+    console.log(`\n━━━ MY POSTS (uid: ${uid}) ━━━`);
+
+    const r = await fetch(
+      `https://www.infinix.club/v5/content/thread/userThread?page=${page}&limit=${limit}&uid=${uid}`,
+      {
+        headers: {
+          "xclub-authorization": authToken,
+          "cookie":              cookie || "",
+          "accept":              "application/json, text/plain, */*",
+          "accept-language":     "en-US,en;q=0.9",
+          "accept-language-api": "en",
+          "user-agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+          "referer":             "https://www.infinix.club/foryou",
+          "sec-fetch-dest":      "empty",
+          "sec-fetch-mode":      "cors",
+          "sec-fetch-site":      "same-origin"
+        }
+      }
+    );
+
+    const text = await r.text();
+    console.log("My posts response:", text.slice(0, 400));
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: "Non-JSON" }); }
+    res.json({ httpStatus: r.status, data });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 10b. Like a post ───────────────────────
+app.post("/api/like", async (req, res) => {
+  const { pid, authToken, cookie } = req.body;
+  if (!pid)       return res.status(400).json({ error: "pid required" });
+  if (!authToken) return res.status(400).json({ error: "Auth token required" });
+
+  console.log(`\n━━━ LIKE REQUEST — pid: ${pid} ━━━`);
+
+  try {
+    const r = await fetch("https://infinix.club/v5/content/post/like", {
+      method:  "POST",
+      headers: {
+        "content-type":        "application/json",
+        "accept":              "application/json, text/plain, */*",
+        "accept-language-api": "en",
+        "xclub-authorization": authToken,
+        "cookie":              cookie || "",
+        "user-agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+        "referer":             "https://infinix.club/foryou",
+        "origin":              "https://infinix.club",
+        "sec-fetch-dest":      "empty",
+        "sec-fetch-mode":      "cors",
+        "sec-fetch-site":      "same-origin"
+      },
+      body: JSON.stringify({ pid: parseInt(pid) })
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: "Non-JSON: " + text.slice(0,200) }); }
+    console.log(`Like response for pid ${pid}:`, JSON.stringify(data));
+    res.json({ success: data.status === 1, raw: data });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 10c. Comment on a thread ───────────────
+app.post("/api/comment", async (req, res) => {
+  const { tid, message, authToken, cookie } = req.body;
+  if (!tid || !message) return res.status(400).json({ error: "tid and message required" });
+  if (!authToken)        return res.status(400).json({ error: "Auth token required" });
+
+  try {
+    const r = await fetch("https://infinix.club/v5/content/post/newReply", {
+      method:  "POST",
+      headers: {
+        "content-type":        "application/json",
+        "accept":              "application/json, text/plain, */*",
+        "accept-language-api": "en",
+        "xclub-authorization": authToken,
+        "cookie":              cookie || "",
+        "user-agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+        "referer":             `https://infinix.club/forum/209/${tid}`,
+        "origin":              "https://infinix.club",
+        "sec-fetch-dest":      "empty",
+        "sec-fetch-mode":      "cors",
+        "sec-fetch-site":      "same-origin"
+      },
+      body: JSON.stringify({ tid: String(tid), message })
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: "Non-JSON: " + text.slice(0,200) }); }
+    res.json({ success: data.status === 1, raw: data });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── 10. Single thread views ───────────────
+app.get("/api/thread/:tid", async (req, res) => {
+  const { tid } = req.params;
+  const { authToken, cookie } = req.query;
+
+  try {
+    const r = await fetch(`https://infinix.club/v5/content/thread/${tid}`, {
+      headers: {
+        "xclub-authorization": authToken || "",
+        "cookie":              cookie || "",
+        "accept":              "application/json, text/plain, */*",
+        "accept-language-api": "en",
+        "user-agent":          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+        "referer":             "https://infinix.club/foryou",
+        "sec-fetch-dest":      "empty",
+        "sec-fetch-mode":      "cors",
+        "sec-fetch-site":      "same-origin"
+      }
+    });
+    const data = JSON.parse(await r.text());
+    const d    = data?.data || {};
+    console.log(`Thread lookup: tid=${tid} → pid=${d.pid}, subject="${d.subject}"`);
+    res.json({
+      success: true,
+      tid:      d.tid,
+      pid:      d.pid,
+      subject:  d.subject,
+      views:    d.views    || 0,
+      replies:  d.replies  || 0,
+      likes:    d.like     || 0,
+      shares:   d.share_num|| 0,
+      dateline: d.dateline || 0,
+      fid:      d.fid      || 0,
+      topid:    d.topid    || 0
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Start ─────────────────────────────────
-app.listen(PORT, () => {
+const os = require("os");
+
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) return iface.address;
+    }
+  }
+  return 'localhost';
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  const localIP = getLocalIP();
   console.log(`\n✓ Infinix Club Proxy Server running`);
-  console.log(`  http://localhost:${PORT}`);
-  console.log(`  Dashboard: http://localhost:${PORT}/infinix_dashboard.html\n`);
+  console.log(`\n  💻 PC:     http://localhost:${PORT}`);
+  console.log(`  📱 Mobile: http://${localIP}:${PORT}`);
+  console.log(`\n  Dashboard (PC):     http://localhost:${PORT}/login.html`);
+  console.log(`  Dashboard (Mobile): http://${localIP}:${PORT}/login.html\n`);
 });
