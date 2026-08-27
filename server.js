@@ -150,6 +150,59 @@ Rules:
 Return ONLY raw JSON (no markdown, no backticks):
 {"title": "Short casual title here", "content": "Post content with [b]headings[/b]"}`;
 
+  // Helper: clean AI response and extract JSON
+  function extractJSON(text) {
+    // Remove <think>...</think> blocks (with or without closing tag)
+    let clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+    // Also remove any remaining <think> block that never closed
+    clean = clean.replace(/<think>[\s\S]*/gi, "");
+    // Remove markdown code fences
+    clean = clean.replace(/```json|```/gi, "").trim();
+    // Find first { to last }
+    const start = clean.indexOf('{');
+    let end     = clean.lastIndexOf('}');
+
+    if (start === -1) throw new Error("No JSON object found in response");
+
+    // If no closing brace — JSON was truncated, try to close it
+    if (end === -1 || end < start) {
+      clean = clean.slice(start);
+      // Count open braces to figure out how many to close
+      let openBraces = 0;
+      for (const ch of clean) {
+        if (ch === '{') openBraces++;
+        else if (ch === '}') openBraces--;
+      }
+      // Close any open string first (if truncated mid-string)
+      if (clean.endsWith('"') || !clean.endsWith('"')) {
+        // Add closing quote + brace for each open brace
+        clean = clean.trimEnd();
+        if (!clean.endsWith('"')) clean += '"';
+        clean += '}'.repeat(Math.max(1, openBraces));
+      }
+    } else {
+      clean = clean.slice(start, end + 1);
+    }
+
+    try {
+      return JSON.parse(clean);
+    } catch(e) {
+      // Last resort: try to extract title and content manually via regex
+      const titleMatch   = text.match(/"title"\s*:\s*"([^"]+)"/);
+      const contentMatch = text.match(/"content"\s*:\s*"([\s\S]+?)(?:"|$)/);
+      const textMatch    = text.match(/"text"\s*:\s*"([^"]+)"/);
+      const bodyMatch    = text.match(/"body"\s*:\s*"([^"]+)"/);
+
+      if (titleMatch || contentMatch) {
+        return {
+          title:   titleMatch?.[1]  || "Post",
+          content: contentMatch?.[1]?.replace(/\\n/g, '\n') || textMatch?.[1] || bodyMatch?.[1] || "Post content"
+        };
+      }
+      throw new Error("Could not parse JSON: " + e.message);
+    }
+  }
+
   try {
     // Try Anthropic first
     const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -165,8 +218,7 @@ Return ONLY raw JSON (no markdown, no backticks):
     if (anthropicRes.ok) {
       const data   = await anthropicRes.json();
       const raw    = data.content?.map(c => c.text || "").join("") || "";
-      const clean  = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      const parsed = extractJSON(raw);
       return res.json({ success: true, ...parsed });
     }
 
@@ -180,23 +232,34 @@ Return ONLY raw JSON (no markdown, no backticks):
         "Authorization": `Bearer ${groqKey}`
       },
       body: JSON.stringify({
-        model:       "llama-3.3-70b-versatile",
-        messages:    [{ role: "user", content: prompt }],
-        temperature: 0.8,
-        max_tokens:  1000
+        model:       "llama-3.1-8b-instant",
+        messages:    [
+          { role: "system", content: "You are a JSON API. You MUST respond with ONLY a valid JSON object. No text before or after. No markdown. No explanation. Format: {\"title\": \"...\", \"content\": \"...\"}" },
+          { role: "user",   content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens:  2000
       })
     });
 
     const groqData = await groqRes.json();
     if (!groqRes.ok) throw new Error(groqData.error?.message || "Groq error");
 
-    const raw2    = groqData.choices?.[0]?.message?.content || "";
-    const clean2  = raw2.replace(/```json|```/g, "").trim();
-    const parsed2 = JSON.parse(clean2);
+    const raw2 = groqData.choices?.[0]?.message?.content || "";
+    console.log("Groq raw (first 400):", raw2.slice(0, 400));
+
+    // Check if response was cut off
+    const finishReason = groqData.choices?.[0]?.finish_reason;
+    if (finishReason === 'length') {
+      console.warn("Response truncated — trying to salvage JSON");
+    }
+
+    const parsed2 = extractJSON(raw2);
     return res.json({ success: true, ...parsed2 });
 
   } catch (err) {
     console.error("Generate error:", err.message);
+    console.error("Stack:", err.stack?.slice(0, 300));
     res.status(500).json({ error: err.message });
   }
 });
@@ -836,6 +899,9 @@ function getLocalIP() {
   return 'localhost';
 }
 
+// ── Keep-Alive (Render free tier sleep prevention) ────
+app.get("/ping", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
+
 app.listen(PORT, '0.0.0.0', () => {
   const localIP = getLocalIP();
   console.log(`\n✓ Infinix Club Proxy Server running`);
@@ -843,4 +909,18 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`  📱 Mobile: http://${localIP}:${PORT}`);
   console.log(`\n  Dashboard (PC):     http://localhost:${PORT}/login.html`);
   console.log(`  Dashboard (Mobile): http://${localIP}:${PORT}/login.html\n`);
+
+  // Self-ping every 14 minutes to prevent Render free tier sleep
+  if (process.env.RENDER_EXTERNAL_URL) {
+    const selfUrl = process.env.RENDER_EXTERNAL_URL + "/ping";
+    console.log(`  🔄 Keep-alive: pinging ${selfUrl} every 14 minutes\n`);
+    setInterval(async () => {
+      try {
+        const r = await fetch(selfUrl);
+        console.log(`[Keep-alive] Ping OK — ${new Date().toLocaleTimeString()}`);
+      } catch(e) {
+        console.log(`[Keep-alive] Ping failed: ${e.message}`);
+      }
+    }, 14 * 60 * 1000);
+  }
 });
